@@ -27,7 +27,7 @@ export const jsonSchemaRecord: Runtype<ClassSchema> = RTLazy(() =>
     type: RTString.Or(RTUndefined),
     doc: RTString.Or(RTUndefined),
     mode: RTString.withConstraint((v: string) => !!v.match(/[\a-zA-Z+]/)).Or(
-      RTUndefined,
+      RTUndefined
     ),
     inherits: RTArray(RTString).Or(RTUndefined),
     properties: Dictionary(jsonSchemaRecord).Or(RTUndefined),

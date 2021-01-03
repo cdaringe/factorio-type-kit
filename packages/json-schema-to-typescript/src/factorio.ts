@@ -35,9 +35,9 @@ const factorioTypeToTsType = (s?: string): string => {
       debugger;
       throw new Error(`could not parse dict type ${s}`);
     }
-    return `Record<${factorioTypeToTsType(a)}, ${
-      factorioTypeToTsType(b.join("→"))
-    }>`;
+    return `Record<${factorioTypeToTsType(a)}, ${factorioTypeToTsType(
+      b.join("→")
+    )}>`;
   }
   return s;
 };
@@ -57,9 +57,7 @@ const classSchemaToInterfaceString = (name: string, schema: ClassSchema) => {
     throw new Error("classes should have same name");
   }
   if (schema.mode) throw new Error("classes should not have mode");
-  if (
-    !schema.properties || !(Object.keys(schema.properties).length)
-  ) {
+  if (!schema.properties || !Object.keys(schema.properties).length) {
     throw new Error(`empty class found: ${name}`);
   }
   const { properties, methods } = Object.entries(schema.properties).reduce(
@@ -67,7 +65,7 @@ const classSchemaToInterfaceString = (name: string, schema: ClassSchema) => {
       const [propName, propSchema] = curr;
       if (propName.match(/operator/)) {
         console.warn(
-          `dropping custom operator ${propName} on ${name}. https://typescripttolua.github.io/docs/advanced/compiler-annotations`,
+          `dropping custom operator ${propName} on ${name}. https://typescripttolua.github.io/docs/advanced/compiler-annotations`
         );
         return acc;
       }
@@ -78,14 +76,14 @@ const classSchemaToInterfaceString = (name: string, schema: ClassSchema) => {
     {
       properties: [] as [string, ClassSchema][],
       methods: [] as [string, ClassSchema][],
-    },
+    }
   );
   const propertyStrings = properties.map(([name, schema]) => {
     return `
       ${toDocString(schema.doc)}
-      ${testIsReadonly(schema.mode) ? "readonly " : ""}${name}: ${
-      factorioTypeToTsType(schema.type)
-    };
+      ${
+        testIsReadonly(schema.mode) ? "readonly " : ""
+      }${name}: ${factorioTypeToTsType(schema.type)};
       `;
   });
   return `
@@ -97,16 +95,18 @@ ${propertyStrings.map((s) => `\t${s}`).join("\n")}
 };
 
 const toClassesInterfaces = (classes: JsonClasses) =>
-  Object.entries(classes).sort(([a], [b]) => b > a ? 1 : -1)
+  Object.entries(classes)
+    .sort(([a], [b]) => (b > a ? 1 : -1))
     .map(([className, schema]) =>
       classSchemaToInterfaceString(className, schema)
-    ).join("\n");
+    )
+    .join("\n");
 
 async function go() {
   const classes = jsonClassSchema.check(
     await parseFromDisk({
       filename: resolve(process.cwd(), "classes.json"),
-    }),
+    })
   );
   const out = toClassesInterfaces(classes);
   await fs.writeFile("classes.d.ts", out);

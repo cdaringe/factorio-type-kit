@@ -49,8 +49,9 @@ const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {
     HTMLElement,
     HTMLElement
   ];
-  if (!headerEl || !contentEl)
+  if (!headerEl || !contentEl) {
     throw new Error(`unexpected defines HTML structure ${rootEl.innerHTML}`);
+  }
   const name = headerEl.innerText.trim();
   const descriptionEl = Array.from(contentEl.children).find(
     (el) => el.tagName === "p"
