@@ -1,10 +1,11 @@
 import Bluebird from "bluebird";
 import { promises as fs } from "fs";
-import { JSONSchema4 } from "json-schema";
+import { JSONSchema6 } from "json-schema";
 import { compile } from "json-schema-to-typescript";
 import { Page, Browser, launch } from "puppeteer";
-import { classNames } from "./globals";
-import { scrapeClass } from "./scrape/classes";
+import { classNames as globalClassNames } from "./globals";
+import { fromLuaType } from "./json-schema";
+import { scrapeClassPage } from "./scrape/classes";
 import { scrapeDefines } from "./scrape/defines";
 import { loadVirtualPage, toDocument } from "./scrape/dom";
 
@@ -24,25 +25,39 @@ const createGetDefines = (urlRoot: string, browser: Browser) => async () => {
 const createGetClasses = (
   browser: Browser,
   classLinks: { text: string; href: string }[]
-) =>
-  classLinks.map(({ text: className, href }) => async () => {
-    const page = await browser.newPage();
-    await page.goto(href, {
-      waitUntil: "networkidle2",
-    });
-    const parts = href.split("/");
-    return {
-      className,
-      schema: scrapeClass(toDocument(await page.content()), className, {
+) => async () =>
+  Bluebird.map(
+    classLinks,
+    async ({ text, href }) => {
+      const page = await browser.newPage();
+      await page.goto(href, {
+        waitUntil: "networkidle2",
+      });
+      const parts = href.split("/");
+      return scrapeClassPage(toDocument(await page.content()), {
         baseUrl: href,
         pageBasename: parts[parts.length - 1],
-      }),
-    };
-  });
+      }).map((schema) => {
+        const classNameSchema = schema?.properties?.name;
+        if (typeof classNameSchema === "boolean")
+          throw new Error("invalid classNameSchema");
+        if (!classNameSchema) throw new Error(`class schema missing name prop`);
+        const className = classNameSchema.const;
+        if (typeof className !== "string")
+          throw new Error("invalid class schema, property `name` Schema");
+        return {
+          className,
+          schema,
+        };
+      });
+    },
+    {
+      concurrency: 1, // 5,
+    }
+  );
 
 const enumerateClasses = async (page: Page, baseUrl: string) => {
   const { document } = loadVirtualPage(await page.content());
-  debugger;
   return Array.from(
     document.getElementById("Classes").nextElementSibling.nextElementSibling
       .nextElementSibling.nextElementSibling.nextElementSibling.firstChild
@@ -68,72 +83,78 @@ export const produce = async ({
     string,
     {
       slug: string;
-      parse: (page: Page) => JSONSchema4;
+      parse: (page: Page) => JSONSchema6;
     }
   >;
 }) => {
   const browser = await launch({ headless: true });
-  const page = await browser.newPage();
-  await page.goto(urls.apiRoot, { waitUntil: "networkidle2" });
-  const classLinks = await enumerateClasses(page, urls.apiRoot);
-  const [defines, ...classes] = Bluebird.map(
-    [
-      createGetDefines(urls.apiRoot, browser),
-      ...createGetClasses(browser, classLinks),
-    ],
-    (fn) => fn(),
-    {
-      concurrency: 5,
-    }
-  );
-  const schema: JSONSchema4 = {
-    type: "object",
-    description: "Factorio Lua API",
-    required: [...classNames, "defines"],
-    properties: {
-      defines,
-      ...globalClasses,
-    },
-    additionalProperties: false,
-  };
-  const tso = await compile(schema, "FactorioApi");
-  await Promise.all([
-    fs.writeFile("factorio.schema.json", JSON.stringify(schema, null, 2)),
-    fs.writeFile("factorio.schema.d.ts", tso),
-  ]);
-  browser.close();
+  try {
+    const page = await browser.newPage();
+    await page.goto(urls.apiRoot, { waitUntil: "networkidle2" });
+    const classLinks = await enumerateClasses(page, urls.apiRoot);
+    const classSchemas = await createGetClasses(
+      browser,
+      classLinks
+    )().then((pageSchemas) => pageSchemas.flat());
+    const globalClasses = classSchemas.filter(({ className }) =>
+      globalClassNames.some((gcn) => gcn === className)
+    );
+    const defines = await createGetDefines(urls.apiRoot, browser)();
+    const schema: JSONSchema6 = {
+      type: "object",
+      description: "Factorio Lua API",
+      required: [...globalClassNames, "defines"],
+      properties: {
+        defines,
+        ...globalClasses.reduce((acc, { className, schema }) => {
+          return {
+            [className]: schema,
+            ...acc,
+          };
+        }, {} as Required<JSONSchema6>["properties"]),
+      },
+      additionalProperties: false,
+    };
+    const tso = await compile(schema as any, "FactorioApi");
+    await Promise.all([
+      fs.writeFile("factorio.schema.json", JSON.stringify(schema, null, 2)),
+      fs.writeFile("factorio.schema.d.ts", tso),
+    ]);
+  } finally {
+    browser.close();
+  }
 };
 
-// export const parseArgText = (text: string) => {
-//   const [name, r1] = text.split("::").map((s) => s.trim());
-//   const [_, type] = r1.match(/^([a-zA-Z0-9]+)\s*/)!;
-//   const r2 = r1.replace(type, "").trim();
-//   const optional = !!r2.match(/^\(optional/);
-//   const description = r2.replace("(optional):", "").trim();
-//   return {
-//     name,
-//     optional,
-//     type: fromLuaType(type),
-//     description,
-//   };
-// };
+export const parseArgText = (text: string) => {
+  const [name, r1] = text.split("::").map((s) => s.trim());
+  const [_, type] = r1.match(/^([a-zA-Z0-9]+)\s*/)!;
+  const r2 = r1.replace(type, "").trim();
+  const optional = !!r2.match(/^\(optional/);
+  const description = r2.replace("(optional):", "").trim();
+  return {
+    name,
+    optional,
+    type: fromLuaType(type),
+    description,
+  };
+};
 
-// const parseEventHtml = (el: Element) => {
-//   const [c1, c2] = Array.from(el.children) || [];
-//   const name = c1!.textContent;
-//   const [descriptionEl, _empty, detailEl] = Array.from(c2.children) || [];
-//   const description = descriptionEl?.innerHTML || "";
-//   const [_detailHeader, detailContent] = Array.from(detailEl.children) || [];
-//   const args = (Array.from(detailContent?.children) || [])
-//     .filter(Boolean)
-//     .map((node) => parseArgText((node as HTMLElement).innerText));
-//   return {
-//     name,
-//     description,
-//     args,
-//   };
-// };
+const parseEventHtml = (el: Element) => {
+  const [c1, c2] = Array.from(el.children) || [];
+  const name = c1!.textContent;
+  const [descriptionEl, _empty, detailEl] = Array.from(c2.children) || [];
+  const description = descriptionEl?.innerHTML || "";
+  const [_detailHeader, detailContent] = Array.from(detailEl.children) || [];
+  const args = (Array.from(detailContent?.children) || [])
+    .filter(Boolean)
+    .map((node) => parseArgText((node as HTMLElement).innerText));
+  return {
+    name,
+    description,
+    args,
+  };
+};
 
-// const parseEvents = (page: pup.Page) => {
-//   Array.from(document.querySelectorAll(`[id*=on_]`)).map(parseEventHtml);
-// };
+const parseEvents = (page: Page) => {
+  Array.from(document.querySelectorAll(`[id*=on_]`)).map(parseEventHtml);
+};

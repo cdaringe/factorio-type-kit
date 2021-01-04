@@ -1,9 +1,9 @@
-import type { JSONSchemaType } from "ajv";
+import type { JSONSchema6 } from "json-schema";
 
-export const fromLuaType = (ltype: string): JSONSchemaType<any> => {
+export const fromLuaType = (ltype: string): JSONSchema6 => {
   if (ltype.match(/^(array of)(.*)/)) {
     const [, , rest] = ltype.match(/^(array of)(.*)/)!;
-    const arr: JSONSchemaType<any> = {
+    const arr: JSONSchema6 = {
       type: "array",
       items: fromLuaType(rest),
     };
@@ -14,7 +14,7 @@ export const fromLuaType = (ltype: string): JSONSchemaType<any> => {
       /^(dictionary|CustomDictionary)([^→]*)→(.*)/
     )!;
     if (lhs !== "string") throw new Error(`unexpected dictionary ${ltype}`);
-    const ob: JSONSchemaType<any> = {
+    const ob: JSONSchema6 = {
       type: "object",
       additionalProperties: fromLuaType(rhs),
       required: [],
@@ -22,21 +22,29 @@ export const fromLuaType = (ltype: string): JSONSchemaType<any> => {
     return ob;
   }
   switch (ltype) {
+    case "int8":
+    case "int16":
+    case "int32":
+    case "int64":
     case "uint":
     case "double":
     case "float":
-      const num: JSONSchemaType<any> = { type: "number" };
+      const num: JSONSchema6 = { type: "number" };
       return num;
     case "string":
     case "boolean":
       return { type: ltype };
   }
   if (ltype.match(/Lua/)) {
-    const ref: JSONSchemaType<any> = {
+    const ref: JSONSchema6 = {
       $ref: `#/definitions/${ltype}`,
-      nullable: true,
     };
     return ref;
+  }
+  if (ltype.match(/defines\..+/)) {
+    return {
+      const: ltype,
+    };
   }
   throw new Error(`unhandled lua => JSONSchema conversion ${ltype}`);
 };

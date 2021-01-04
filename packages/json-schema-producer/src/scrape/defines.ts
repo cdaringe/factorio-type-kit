@@ -1,4 +1,4 @@
-import { JSONSchema4 } from "json-schema";
+import { JSONSchema6 } from "json-schema";
 import { PageMeta } from "../interfaces";
 import { asUrlCorrectedMarkdown } from "../markdown";
 import type { Document } from "happy-dom";
@@ -36,7 +36,7 @@ const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {
   );
 
   const localProperties = localFields.reduce((acc, { name, description }) => {
-    const subschema: JSONSchema4 = {
+    const subschema: JSONSchema6 = {
       type: "string",
       description,
       // type: "object",
@@ -50,7 +50,7 @@ const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {
       ...acc,
       [name]: subschema,
     };
-  }, {} as Required<JSONSchema4>["properties"]);
+  }, {} as Required<JSONSchema6>["properties"]);
 
   const nestedProperties = Array.from(contentEl.children)
     .filter((el) => el.className === "element")
@@ -60,9 +60,9 @@ const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {
         ...acc,
         [name]: schema,
       };
-    }, {} as Required<JSONSchema4>["properties"]);
+    }, {} as Required<JSONSchema6>["properties"]);
 
-  const schema: JSONSchema4 = {
+  const schema: JSONSchema6 = {
     type: "object",
     description: descriptionEl?.innerText.trim() || "",
     properties: {
@@ -88,7 +88,7 @@ export const scrapeDefines = (document: Document, pageMeta: PageMeta) => {
       return { name, schema };
     }
   );
-  const schema: JSONSchema4 = {
+  const schema: JSONSchema6 = {
     type: "object",
     description:
       "Factorio constants, persistent handles.\n@{see https://lua-api.factorio.com/latest/defines.html}\nFactorio does not include types associated with defines :/",

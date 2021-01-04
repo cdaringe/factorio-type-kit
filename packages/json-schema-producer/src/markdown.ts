@@ -1,6 +1,8 @@
 import TurndownService from "turndown";
 import { PageMeta } from "./interfaces";
 
+export const asMarkdown = (s: string) => new TurndownService({}).turndown(s);
+
 export const asUrlCorrectedMarkdown = (
   s: string,
   { baseUrl, pageBasename }: PageMeta
