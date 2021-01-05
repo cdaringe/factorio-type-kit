@@ -104,7 +104,7 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   if (!name) throw new Error("missing impl fn name");
   const signatureEl = query(
     implEl,
-    "element-name",
+    ".element-name",
     "failed to find signature el"
   );
   const [, argsMatch] = signatureEl.textContent.match(/(\(.*\))/) || [];
@@ -112,19 +112,31 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   const argPlaceholders = argsMatch.split(",");
   if (!argPlaceholders.length)
     throw new Error("no args detected. fast parse should have executed");
-  const parametersHeadingEl = queryAll(el, ".detail-header").find(
+  const parametersHeadingEl = queryAll(implEl, ".detail-header").find(
     (el) => el.textContent === "Parameters"
   );
-  if (!parametersHeadingEl) throw new Error("missing parameter heading el");
+  if (!parametersHeadingEl) {
+    debugger;
+    throw new Error("missing parameter heading el");
+  }
   const params = parametersHeadingEl.nextElementSibling.children.map(
     parseParam
   );
-  const returnHeaderSiblingEl = queryAll(el, ".detail-header").find(
+  const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
     (el) => el.textContent === "Return value"
-  );
+  )?.nextElementSibling;
   const returnDescription = asMarkdown(
     returnHeaderSiblingEl?.textContent || ""
   );
+  const returnTypeText = query(
+    signatureEl,
+    ".return-type"
+    // "failed to find return type"
+  )?.textContent;
+  if (!returnTypeText) {
+    throw new Error("failed to find return type");
+  }
+  const jsonSchemaReturnTypeOfLuaType = fromLuaType(returnTypeText);
   const method: Method = {
     properties: {
       name: {
@@ -136,15 +148,8 @@ const parseMemberFunction = (document: Document, row: IElement) => {
       },
       return: {
         description: returnDescription,
-        anyOf: [
-          fromLuaType(
-            query(signatureEl, "return-type", "failed to find return type")
-              .textContent
-          ),
-        ].concat(
-          returnDescription.match("value or nil if none")
-            ? [{ type: "null" }]
-            : []
+        anyOf: [jsonSchemaReturnTypeOfLuaType].concat(
+          returnDescription.match("or nil") ? [{ type: "null" }] : []
         ),
       },
     },

@@ -35,7 +35,7 @@ export const fromLuaType = (ltype: string): JSONSchema6 => {
     case "boolean":
       return { type: ltype };
   }
-  if (ltype.match(/Lua/)) {
+  if (ltype.match(/(Lua|LocalisedString)/)) {
     const ref: JSONSchema6 = {
       $ref: `#/definitions/${ltype}`,
     };
