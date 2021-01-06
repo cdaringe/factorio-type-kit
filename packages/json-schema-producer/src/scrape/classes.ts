@@ -53,17 +53,31 @@ interface Method extends JSONSchema6 {
 
 const parseParam = (el: IElement): JSONSchema6 => {
   const trim = (v: string) => v.trim();
-  const [name, r1] = el.textContent.split("::").map(trim);
-  const [typeStr, description] = r1.split(":").map(trim);
-  return {
-    description: description || "",
-    properties: {
-      name: {
-        const: name,
+  // special case: factorio variadic splat
+  if (el.textContent.startsWith("...")) return { type: "any" };
+  // params with name :: type : description
+  if (el.textContent.includes("::")) {
+    const [name, r1] = el.textContent.split("::").map(trim);
+    const [typeStr, description] = r1.split(":").map(trim);
+    return {
+      description: description || "",
+      properties: {
+        name: {
+          const: name,
+        },
+        type: fromLuaType(typeStr),
       },
-      type: fromLuaType(typeStr),
-    },
-  };
+    };
+  } else {
+    // params with type : description
+    const [typeStr, description] = el.textContent.split(":").map(trim);
+    return {
+      description: description || "",
+      properties: {
+        type: fromLuaType(typeStr),
+      },
+    };
+  }
 };
 
 const parseMemberFunction = (document: Document, row: IElement) => {
@@ -74,7 +88,7 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   );
   const implAnchor = query(el, "a", "missing impl anchor");
   // fast parse when there are no args
-  if (el.textContent.includes("() →")) {
+  if (el.textContent.includes("()")) {
     const method: Method = {
       properties: {
         name: {
@@ -84,9 +98,12 @@ const parseMemberFunction = (document: Document, row: IElement) => {
           type: "array",
           items: [],
         },
-        return: fromLuaType(
-          query(el, ".return-type", "unable to find return type").textContent
-        ),
+        return: el.textContent.includes("→")
+          ? fromLuaType(
+              query(el, ".return-type", "unable to find return type")
+                .textContent
+            )
+          : { type: "null" },
       },
     };
     return method;
@@ -107,8 +124,10 @@ const parseMemberFunction = (document: Document, row: IElement) => {
     ".element-name",
     "failed to find signature el"
   );
-  const [, argsMatch] = signatureEl.textContent.match(/(\(.*\))/) || [];
-  if (!argsMatch) throw new Error("failed to find args");
+  let [, argsMatch] = signatureEl.textContent.match(/((\(|{).*(\)|}))/) || [];
+  if (!argsMatch) {
+    throw new Error("failed to find args");
+  }
   const argPlaceholders = argsMatch.split(",");
   if (!argPlaceholders.length)
     throw new Error("no args detected. fast parse should have executed");
@@ -116,7 +135,6 @@ const parseMemberFunction = (document: Document, row: IElement) => {
     (el) => el.textContent === "Parameters"
   );
   if (!parametersHeadingEl) {
-    debugger;
     throw new Error("missing parameter heading el");
   }
   const params = parametersHeadingEl.nextElementSibling.children.map(
@@ -128,15 +146,11 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   const returnDescription = asMarkdown(
     returnHeaderSiblingEl?.textContent || ""
   );
-  const returnTypeText = query(
-    signatureEl,
-    ".return-type"
-    // "failed to find return type"
-  )?.textContent;
-  if (!returnTypeText) {
+  const returnTypeText = query(signatureEl, ".return-type")?.textContent;
+  const isReturningNil = !signatureEl.textContent.includes("→");
+  if (!returnTypeText && !isReturningNil) {
     throw new Error("failed to find return type");
   }
-  const jsonSchemaReturnTypeOfLuaType = fromLuaType(returnTypeText);
   const method: Method = {
     properties: {
       name: {
@@ -148,9 +162,12 @@ const parseMemberFunction = (document: Document, row: IElement) => {
       },
       return: {
         description: returnDescription,
-        anyOf: [jsonSchemaReturnTypeOfLuaType].concat(
-          returnDescription.match("or nil") ? [{ type: "null" }] : []
-        ),
+        anyOf: (isReturningNil
+          ? [{ type: "null" } as JSONSchema6]
+          : [fromLuaType(returnTypeText)]
+        )
+          .concat(returnDescription.match("or nil") ? [{ type: "null" }] : [])
+          .filter(Boolean),
       },
     },
   };
@@ -158,19 +175,29 @@ const parseMemberFunction = (document: Document, row: IElement) => {
 };
 
 const parseMemberAttr = (_document: Document, sigEl: IElement) => {
+  const paramName = query(
+    sigEl!,
+    ".element-name",
+    "failed to find member attr name element"
+  ).textContent;
   const schema: JSONSchema6 = {
     properties: {
       name: {
-        const: query(
-          sigEl!,
-          ".element-name",
-          "failed to find member attr name element"
-        ).textContent,
+        const: paramName,
       },
-      type: fromLuaType(
-        query(sigEl!, ".param-type", "failed to find member attr type element")
-          .textContent
-      ),
+      // see https://lua-api.factorio.com/latest/LuaItemStack.html connected_entity
+      // some attrs just have no type information :/
+      type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
+        sigEl.textContent.match(m)
+      )
+        ? { type: "any" }
+        : fromLuaType(
+            query(
+              sigEl!,
+              ".param-type",
+              "failed to find member attr type element"
+            ).textContent
+          ),
       mode: {
         const:
           query(sigEl!, ".attribute-mode")
@@ -194,9 +221,9 @@ const parseMemberRow = (
   );
   return {
     description,
-    ...(signatureEl.textContent.includes("→")
-      ? parseMemberFunction(document, signatureEl)
-      : parseMemberAttr(document, signatureEl)),
+    ...(signatureEl.textContent.match(/\[.+\]/)
+      ? parseMemberAttr(document, signatureEl)
+      : parseMemberFunction(document, signatureEl)),
   };
 };
 const parseMemberRows = (

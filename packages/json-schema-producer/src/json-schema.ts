@@ -1,6 +1,31 @@
 import type { JSONSchema6 } from "json-schema";
 
+const definitions: string[] = [];
+
 export const fromLuaType = (ltype: string): JSONSchema6 => {
+  if (ltype.match(/^(dictionary|CustomDictionary)(.*)/)) {
+    const dictionaryParts = ltype.match(
+      /^(dictionary|CustomDictionary)([^→]*)→(.*)/
+    );
+    if (!dictionaryParts) {
+      throw new Error("unable to parse dict types");
+    }
+    const [, _dict, lhs, rhs] = dictionaryParts.map((v) => v.trim());
+    if (!fromLuaType(lhs)) {
+      throw new Error(`unexpected dictionary ${ltype}`);
+    }
+    const ob: JSONSchema6 = {
+      type: "object",
+      additionalProperties: fromLuaType(rhs),
+      required: [],
+    };
+    return ob;
+  }
+  if (ltype.match(" or ")) {
+    return {
+      anyOf: ltype.split(" or ").map((v) => fromLuaType(v.trim())),
+    };
+  }
   if (ltype.match(/^(array of)(.*)/)) {
     const [, , rest] = ltype.match(/^(array of)(.*)/)!;
     const arr: JSONSchema6 = {
@@ -9,19 +34,11 @@ export const fromLuaType = (ltype: string): JSONSchema6 => {
     };
     return arr;
   }
-  if (ltype.match(/^(dictionary|CustomDictionary)(.*)/)) {
-    const [, _dict, lhs, rhs] = ltype.match(
-      /^(dictionary|CustomDictionary)([^→]*)→(.*)/
-    )!;
-    if (lhs !== "string") throw new Error(`unexpected dictionary ${ltype}`);
-    const ob: JSONSchema6 = {
-      type: "object",
-      additionalProperties: fromLuaType(rhs),
-      required: [],
-    };
-    return ob;
-  }
   switch (ltype) {
+    case "uint8":
+    case "uint16":
+    case "uint32":
+    case "uint64":
     case "int8":
     case "int16":
     case "int32":
@@ -35,16 +52,17 @@ export const fromLuaType = (ltype: string): JSONSchema6 => {
     case "boolean":
       return { type: ltype };
   }
-  if (ltype.match(/(Lua|LocalisedString)/)) {
-    const ref: JSONSchema6 = {
-      $ref: `#/definitions/${ltype}`,
-    };
-    return ref;
-  }
   if (ltype.match(/defines\..+/)) {
     return {
       const: ltype,
     };
   }
-  throw new Error(`unhandled lua => JSONSchema conversion ${ltype}`);
+  if (!definitions.includes(ltype)) {
+    definitions.push(ltype.trim());
+    console.warn(`:::: Adding type ${ltype} to definitions`);
+  }
+  const ref: JSONSchema6 = {
+    $ref: `#/definitions/${ltype}`,
+  };
+  return ref;
 };

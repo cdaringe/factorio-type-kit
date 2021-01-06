@@ -32,7 +32,6 @@ const factorioTypeToTsType = (s?: string): string => {
   if (dict) {
     const [a, ...b] = dict.split("→");
     if (!a || !b.length) {
-      debugger;
       throw new Error(`could not parse dict type ${s}`);
     }
     return `Record<${factorioTypeToTsType(a)}, ${factorioTypeToTsType(

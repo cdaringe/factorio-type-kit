@@ -3,6 +3,12 @@ import { promises as fs } from "fs";
 import { JSONSchema6 } from "json-schema";
 import { compile } from "json-schema-to-typescript";
 import { Page, Browser, launch } from "puppeteer";
+import {
+  exists,
+  getCacheFilenameFromUrl,
+  maybeReadFromCache,
+  writeToCache,
+} from "./fs-html-cache";
 import { classNames as globalClassNames } from "./globals";
 import { fromLuaType } from "./json-schema";
 import { scrapeClassPage } from "./scrape/classes";
@@ -22,19 +28,39 @@ const createGetDefines = (urlRoot: string, browser: Browser) => async () => {
   });
 };
 
-const createGetClasses = (
+export const getHtml = async ({
+  browser,
+  url,
+  useCache,
+}: {
+  browser: Browser;
+  url: string;
+  useCache?: boolean;
+}) => {
+  const cacheFilename = getCacheFilenameFromUrl(url);
+  if (useCache) {
+    const cached = await maybeReadFromCache(cacheFilename);
+    if (cached) return cached;
+  }
+  const page = await browser.newPage();
+  await page.goto(url, {
+    waitUntil: "networkidle2",
+  });
+  const html = await page.content();
+  if (useCache) await writeToCache(cacheFilename, html);
+  return html;
+};
+
+const getClasses = async (
   browser: Browser,
   classLinks: { text: string; href: string }[]
-) => async () =>
+) =>
   Bluebird.map(
     classLinks,
     async ({ text, href }) => {
-      const page = await browser.newPage();
-      await page.goto(href, {
-        waitUntil: "networkidle2",
-      });
       const parts = href.split("/");
-      return scrapeClassPage(toDocument(await page.content()), {
+      const html = await getHtml({ url: href, browser, useCache: true });
+      return scrapeClassPage(toDocument(html), {
         baseUrl: href,
         pageBasename: parts[parts.length - 1],
       }).map((schema) => {
@@ -92,10 +118,10 @@ export const produce = async ({
     const page = await browser.newPage();
     await page.goto(urls.apiRoot, { waitUntil: "networkidle2" });
     const classLinks = await enumerateClasses(page, urls.apiRoot);
-    const classSchemas = await createGetClasses(
+    const classSchemas = await getClasses(
       browser,
       classLinks
-    )().then((pageSchemas) => pageSchemas.flat());
+    ).then((pageSchemas) => pageSchemas.flat());
     const globalClasses = classSchemas.filter(({ className }) =>
       globalClassNames.some((gcn) => gcn === className)
     );
