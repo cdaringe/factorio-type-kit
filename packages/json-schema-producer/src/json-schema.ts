@@ -1,4 +1,5 @@
 import type { JSONSchema6 } from "json-schema";
+import { bigBadHacks } from "./hack";
 import { unmodeled } from "./unmodeled-entities";
 
 export const definitionTypes: string[] = [];
@@ -66,6 +67,8 @@ export const fromLuaType = (ltype_: string): JSONSchema6 => {
     case "string":
     case "boolean":
       return { type: ltype };
+    case "nil":
+      return { type: "null" };
   }
   if (ltype.match(/defines\..+/)) {
     return {
@@ -79,8 +82,18 @@ export const fromLuaType = (ltype_: string): JSONSchema6 => {
     definitionTypes.push(ltype.trim());
     console.warn(`:::: Adding type ${ltype}`);
   }
-  const ref: JSONSchema6 = {
-    $ref: `#/definitions/${ltype}`,
-  };
+  const ref: JSONSchema6 = {};
+  Object.defineProperty(ref, "$ref", {
+    get() {
+      if (bigBadHacks.isReadingRefs) return `#/definitions/${ltype}`;
+      // return a def'n that has no children. such a weak defn has no children,
+      // and will create 0 circular refs
+      return "#/definitions/LocalisedString";
+    },
+  });
+  Object.defineProperty(ref, "tsType", {
+    value: ltype,
+    enumerable: false,
+  });
   return ref;
 };

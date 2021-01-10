@@ -1,6 +1,7 @@
 import { IDocument, IElement } from "happy-dom";
 import { JSONSchema6 } from "json-schema";
 import { query } from "../dom-extensions";
+import { withType } from "../langs/typescript";
 import { asMarkdown } from "../markdown";
 import { parseParam } from "./classes";
 
@@ -26,11 +27,28 @@ export const scrapeConcept = (el: IElement) => {
         const: name,
       },
       members: {
-        type: "array",
-        items: fields,
+        type: "object",
+        properties: fields.reduce((acc, field) => {
+          const memberName = (field.properties as any)?.name?.const;
+          if (typeof memberName !== "string") {
+            // @todo, actually parse these child structs
+            // hack! dirty workaround for inconsistent dom structure in Concepts.html
+            console.warn(
+              `dropping concept ${name} member: ${JSON.stringify(field)}`
+            );
+            return acc;
+          }
+          acc[memberName] = field;
+          return acc;
+        }, {} as Record<string, JSONSchema6>),
       },
     },
   };
+  Object.defineProperty(schema, "tsType", {
+    enumerable: false,
+    value: withType.class(schema, { asStruct: true }),
+  });
+
   return schema;
 };
 

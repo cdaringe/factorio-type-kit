@@ -4,6 +4,7 @@ import { JSONSchema6 } from "json-schema";
 import { compile } from "json-schema-to-typescript";
 import { getHtml } from "./browser";
 import { classNames as globalClassNames } from "./globals";
+import { bigBadHacks } from "./hack";
 import { definitionTypes } from "./json-schema";
 import { scrapeClassPage } from "./scrape/classes";
 import { scrapeConcepts } from "./scrape/concepts";
@@ -76,7 +77,19 @@ export const produce = async ({
     additionalProperties: false,
   };
   await fs.writeFile("factorio.schema.json", JSON.stringify(schema));
-  const tso = await compile(schema as any, "FactorioApi", { format: false });
+  bigBadHacks.isReadingRefs = false;
+  const tso = await compile(schema as any, "FactorioApi", {
+    format: false,
+    $refOptions: {
+      resolve: {
+        external: false,
+        file: false,
+      } as any,
+      dereference: {
+        circular: "ignore",
+      },
+    },
+  });
   await fs.writeFile("factorio.schema.d.ts", tso);
 };
 

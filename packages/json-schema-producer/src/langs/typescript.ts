@@ -23,33 +23,65 @@ const toTsType = (jtype: JSONSchema6): string => {
   ) {
     return jtt;
   }
-  // abstract
+  // abstract`
   if (jtt === "array") {
     const items = jtype.items;
-    if (!Array.isArray(items)) throw new Error("invalid array");
-    return `${items.map((it) => toTsType(it as JSONSchema6)).join(" | ")}[]`;
+    if (Array.isArray(items)) {
+      throw new Error("unexpected array");
+    }
+    return `${toTsType(items as JSONSchema6)}[]`;
   }
   if (jtt === "object") {
     const props = jtype.properties as Record<string, JSONSchema6>;
-    if (!props) throw new Error("missing properties field on object");
-    const kvs = Object.entries(props).map(([k, v]) => `"${k}": ${toTsType(v)}`);
-    return `{ ${kvs.join(";")} }`;
+    const additionalProps = jtype.additionalProperties as Record<
+      string,
+      JSONSchema6
+    >;
+    if (!props && !additionalProps) {
+      throw new Error(
+        "missing properties/additionalProperties field on object"
+      );
+    }
+    const kvs = Object.entries(props || []).map(
+      ([k, v]) => `"${k}": ${toTsType(v)}`
+    );
+    const kvsStr = kvs.length ? `{ ${kvs.join(";") + ";"} }` : "";
+    const adpStr = additionalProps
+      ? `Record<string, ${toTsType(additionalProps)}>`
+      : "";
+
+    return [kvsStr, adpStr].filter(Boolean).join("&");
   }
   if (jtype.anyOf) {
     return `(${jtype.anyOf
       .map((t) => toTsType(t as JSONSchema6))
       .join(" | ")})`;
   }
-  throw new Error(`unknown type ${jtt}`);
+  if (typeof jtype.const === "string") return jtype.const;
+  if (typeof jtype.$ref === "string") {
+    const parts = jtype.$ref.split("/");
+    return parts[parts.length - 1];
+  }
+  throw new Error(`unknown type ${jtt} from ${JSON.stringify(jtype)}`);
 };
 
 export const withType = {
-  classProperty: (name: string, schema: JSONSchema6) => {
+  classProperty: (
+    name: string,
+    schema: JSONSchema6,
+    opts: { parseMode: boolean }
+  ) => {
     const mode = (schema.properties?.mode as JSONSchema6)?.const as string[];
-    if (!mode) throw new Error("property has no mode");
-    if (!Array.isArray(mode)) throw new Error("expected mode array");
-    const isRO = !mode.some((rw: string) => !!rw.match(/w/i));
-    return `${isRO ? "readonly " : ""}${name}: ${toTsType(
+    if (opts.parseMode) {
+      if (!mode) {
+        throw new Error("property has no mode");
+      }
+      if (!Array.isArray(mode)) throw new Error("expected mode array");
+    }
+    const isRO = opts.parseMode
+      ? !mode.some((rw: string) => !!rw.match(/w/i))
+      : false;
+    return `${isRO ? "readonly " : ""}"${name}": ${toTsType(
       schema.properties?.type as JSONSchema6
     )}`;
   },
@@ -66,19 +98,37 @@ export const withType = {
     if (!retSchema) {
       throw new Error("missing return value");
     }
-    const ret = toTsType(retSchema);
-    return `(${args}) => ${ret}`;
+    return `(${args}) => ${toTsType(retSchema)}`;
   },
-  class: (schema: JSONSchema6) => {
+  class: (schema: JSONSchema6, opts: { asStruct?: boolean }) => {
     const members = (schema.properties!.members as JSONSchema6)
       .properties as Record<string, JSONSchema6>;
-    const memberStrs = Object.entries(
+    const { properties: propNames, methods: methodNames } = Object.entries(
       members as Record<string, JSONSchema6>
-    ).map(([name, aSchema]) => {
-      if (aSchema.properties?.return)
-        return `${name}: ${withType.method(aSchema)}`;
-      return withType.classProperty(name, aSchema);
+    ).reduce(
+      (acc, [name, aSchema]) => {
+        if (aSchema.properties?.return) acc.methods.push(name);
+        else acc.properties.push(name);
+        return acc;
+      },
+      { properties: [] as string[], methods: [] as string[] }
+    );
+    const sort = (a: string, b: string) => a.localeCompare(b);
+    const propStrs = propNames.sort(sort).map((name) => {
+      return withType.classProperty(name, members[name], {
+        parseMode: !opts?.asStruct,
+      });
     });
-    return `\{\n${memberStrs.map((it) => `  ${it}`).join(";\n")}\n}`;
+    const methodStrs = methodNames.sort(sort).map((name) => {
+      return `${name}: ${withType.method(members[name])}`;
+    });
+    return `
+{
+  ${propStrs.length ? "/* properties */" : ""}
+  ${propStrs.map((it) => `  ${it};`).join("\n")}
+
+  ${methodStrs.length ? "/* methods */" : ""}
+  ${methodStrs.map((it) => `  ${it};`).join("\n")}
+}`;
   },
 };

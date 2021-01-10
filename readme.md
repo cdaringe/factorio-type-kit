@@ -20,5 +20,7 @@
 ## ToDo
 
 - [ ] improve `defines` symbol typings in JSON schema
-  - ATM, we guess, because factorio gives us no type information
-  - perhaps create mapping document that can be used to narrow the types, post-scrape?
+- [ ] fix all methods returning null :grimmace:
+- [ ] reduce unknowns
+- [ ] parse _more_ stuff
+- [ ] expose some stuff globally, or at least provide a recipe for folks to do so

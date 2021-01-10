@@ -1,7 +1,0 @@
-{
-  "name": "@dino-dna/factorio-json-schema-to-typescript",
-  "version": "1.0.0",
-  "dependencies": {
-    "runtypes": "^5.0.1"
-  }
-}

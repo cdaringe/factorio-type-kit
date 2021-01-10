@@ -10,4 +10,5 @@ export const tasks: Tasks = {
   ...{ dev: `node -r ts-node/register src/factorio.ts` },
   ...{ debug: `node --inspect-brk -r ts-node/register src/factorio.ts` },
   ...{ bootstrap, b: bootstrap },
+  r: `$(cd packages/json-schema-producer/ && node -r ts-node/register/transpile-only src/bin.ts)`,
 };

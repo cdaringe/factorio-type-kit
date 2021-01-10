@@ -175,6 +175,8 @@ const parseMemberAttr = (_document: Document, sigEl: IElement) => {
     ".element-name",
     "failed to find member attr name element"
   ).textContent;
+  const paramEl = query(sigEl!, ".param-type");
+  const jsonSchemaAny: JSONSchema6 = { type: "any" };
   const schema: JSONSchema6 = {
     properties: {
       name: {
@@ -185,14 +187,10 @@ const parseMemberAttr = (_document: Document, sigEl: IElement) => {
       type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
         sigEl.textContent.match(m)
       )
-        ? { type: "any" }
-        : fromLuaType(
-            query(
-              sigEl!,
-              ".param-type",
-              "failed to find member attr type element"
-            ).textContent.trim()
-          ),
+        ? paramEl
+          ? fromLuaType(paramEl.textContent)
+          : jsonSchemaAny
+        : jsonSchemaAny,
       mode: {
         const:
           query(sigEl!, ".attribute-mode")
@@ -283,7 +281,10 @@ const scrapeClassFromEl = (
       },
     },
   };
-  schema.tsType = withType.class(schema);
+  Object.defineProperty(schema, "tsType", {
+    value: withType.class(schema, { asStruct: false }),
+    enumerable: false,
+  });
   return schema;
 };
 

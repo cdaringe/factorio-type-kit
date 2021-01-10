@@ -24,4 +24,12 @@ export const unmodeled = [
   "Depending on type",
   "peak",
   "restriction",
+  "CustomArray of Alignment",
+  "Icon",
+  "Connection",
+  "TabAndContent",
+  "MapGenPreset",
+  "UnitSpawnDefinition",
+  "CircuitConnectionDefinition",
+  "CraftingQueueItem",
 ];
