@@ -1,2 +1,4 @@
 cached
 node_modules
+.factorio-ts-cache
+*.html

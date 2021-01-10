@@ -16,7 +16,12 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register/transpile-only",
+        "--max-old-space-size=8000"
+      ],
       "args": ["${workspaceRoot}/packages/json-schema-producer/src/bin.ts"],
       "cwd": "${workspaceRoot}/packages/json-schema-producer",
       "skipFiles": [],

@@ -1,5 +1,5 @@
 import ava, { TestInterface } from "ava";
-import { parseArgText } from "../src/from-website";
+import { parseArgText } from "../src/scrape/events";
 
 const test = ava as TestInterface<{}>;
 

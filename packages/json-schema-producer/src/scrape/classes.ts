@@ -1,9 +1,10 @@
 import type { Document, IElement } from "happy-dom";
-import { JSONSchema6 } from "json-schema";
+import { JSONSchema6, JSONSchema6Definition } from "json-schema";
 import { filterWhile } from "../collections";
 import { query, queryAll, siblings } from "../dom-extensions";
 import { PageMeta } from "../interfaces";
 import { fromLuaType } from "../json-schema";
+import { withType } from "../langs/typescript";
 import { asMarkdown, asUrlCorrectedMarkdown } from "../markdown";
 
 const getDescription = (el: IElement, pageMeta: PageMeta): string => {
@@ -21,24 +22,8 @@ const getDescription = (el: IElement, pageMeta: PageMeta): string => {
 };
 
 const getClassListingEls = (document: Document) =>
-  document.body.children.filter((el_) => {
-    const el = (el_ as any) as HTMLElement;
-    return (
-      el.classList.contains("brief-listing") &&
-      el.firstElementChild?.textContent?.match(/class /) &&
-      el.firstElementChild?.id &&
-      el.firstElementChild?.id.match(/Lua/)
-    );
-  });
+  document.querySelectorAll(".brief-listing > .brief-listing");
 
-interface MethodParam extends JSONSchema6 {
-  properties: {
-    name: {
-      const: string;
-    };
-    type: JSONSchema6;
-  };
-}
 type MethodParams = JSONSchema6 & { items: Required<JSONSchema6>["items"] };
 
 interface Method extends JSONSchema6 {
@@ -51,13 +36,18 @@ interface Method extends JSONSchema6 {
   };
 }
 
-const parseParam = (el: IElement): JSONSchema6 => {
+export const parseParam = (el: IElement): JSONSchema6 => {
   const trim = (v: string) => v.trim();
+  // hack. remove grandchildren descriptors. yields worse types
+  el.querySelectorAll("li").forEach((child) =>
+    child.parentNode.removeChild(child)
+  );
+  const txt = el.textContent.trim();
   // special case: factorio variadic splat
-  if (el.textContent.startsWith("...")) return { type: "any" };
+  if (txt.startsWith("...")) return { type: "any" };
   // params with name :: type : description
-  if (el.textContent.includes("::")) {
-    const [name, r1] = el.textContent.split("::").map(trim);
+  if (txt.includes("::")) {
+    const [name, r1] = txt.split("::").map(trim);
     const [typeStr, description] = r1.split(":").map(trim);
     return {
       description: description || "",
@@ -70,7 +60,7 @@ const parseParam = (el: IElement): JSONSchema6 => {
     };
   } else {
     // params with type : description
-    const [typeStr, description] = el.textContent.split(":").map(trim);
+    const [typeStr, description] = txt.split(":").map(trim);
     return {
       description: description || "",
       properties: {
@@ -100,8 +90,11 @@ const parseMemberFunction = (document: Document, row: IElement) => {
         },
         return: el.textContent.includes("→")
           ? fromLuaType(
-              query(el, ".return-type", "unable to find return type")
-                .textContent
+              query(
+                el,
+                ".return-type",
+                "unable to find return type"
+              ).textContent.trim()
             )
           : { type: "null" },
       },
@@ -137,9 +130,11 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   if (!parametersHeadingEl) {
     throw new Error("missing parameter heading el");
   }
-  const params = parametersHeadingEl.nextElementSibling.children.map(
-    parseParam
-  );
+  const params = Array.from(
+    parametersHeadingEl.nextElementSibling.querySelectorAll(".field-list > li")
+  )
+    .filter((el) => el.textContent)
+    .map(parseParam);
   const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
     (el) => el.textContent === "Return value"
   )?.nextElementSibling;
@@ -164,7 +159,7 @@ const parseMemberFunction = (document: Document, row: IElement) => {
         description: returnDescription,
         anyOf: (isReturningNil
           ? [{ type: "null" } as JSONSchema6]
-          : [fromLuaType(returnTypeText)]
+          : [fromLuaType(returnTypeText.trim())]
         )
           .concat(returnDescription.match("or nil") ? [{ type: "null" }] : [])
           .filter(Boolean),
@@ -196,7 +191,7 @@ const parseMemberAttr = (_document: Document, sigEl: IElement) => {
               sigEl!,
               ".param-type",
               "failed to find member attr type element"
-            ).textContent
+            ).textContent.trim()
           ),
       mode: {
         const:
@@ -232,12 +227,22 @@ const parseMemberRows = (
   pageMeta: PageMeta
 ) => rows.map((row) => parseMemberRow(document, row, pageMeta));
 
+const prefixDescription = (description: string) => (schema: JSONSchema6) => {
+  if (!description) return schema;
+  if (!schema.description) {
+    schema.description = description;
+    return schema;
+  }
+  schema.description = `${description}. ${schema.description}`;
+  return schema;
+};
+
 const scrapeClassFromEl = (
   document: Document,
   el: IElement,
   pageMeta: PageMeta
 ) => {
-  const rootSiblings = el.firstElementChild.children;
+  const rootSiblings = el.children;
   const classNameEl = rootSiblings.find(
     (it) => "className" in it && it.className === "type-name"
   );
@@ -264,8 +269,13 @@ const scrapeClassFromEl = (
         const: name,
       },
       members: {
-        type: "array",
-        items: members,
+        type: "object",
+        properties: members.reduce((acc, schema) => {
+          acc[
+            (schema.properties?.name as JSONSchema6).const as string
+          ] = schema;
+          return acc;
+        }, {} as Required<JSONSchema6>["properties"]),
       },
       inherits: {
         type: "array",
@@ -273,26 +283,18 @@ const scrapeClassFromEl = (
       },
     },
   };
-  return schema;
-};
-
-const prefixDescription = (description: string) => (schema: JSONSchema6) => {
-  if (!description) return schema;
-  if (!schema.description) {
-    schema.description = description;
-    return schema;
-  }
-  schema.description = `${description}. ${schema.description}`;
+  schema.tsType = withType.class(schema);
   return schema;
 };
 
 export const scrapeClassPage = (document: Document, pageMeta: PageMeta) => {
   const classEls = getClassListingEls(document);
-  return classEls
+  const classes = classEls
     .map((el) => scrapeClassFromEl(document, el, pageMeta))
     .map(
       prefixDescription(
         getDescription(document.body.getElementsByTagName("h1")[0], pageMeta)
       )
     );
+  return classes;
 };
