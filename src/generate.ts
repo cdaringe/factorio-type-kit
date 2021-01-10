@@ -125,7 +125,7 @@ const getClassesFromUrl = async (classLinks: { href: string }[]) =>
       });
     },
     {
-      concurrency: 5,
+      concurrency: 10,
     }
   );
 
