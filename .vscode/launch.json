@@ -22,8 +22,8 @@
         "ts-node/register/transpile-only",
         "--max-old-space-size=8000"
       ],
-      "args": ["${workspaceRoot}/packages/json-schema-producer/src/bin.ts"],
-      "cwd": "${workspaceRoot}/packages/json-schema-producer",
+      "args": ["${workspaceRoot}/src/bin.ts"],
+      "cwd": "${workspaceRoot}",
       "skipFiles": [],
       "console": "integratedTerminal"
     }

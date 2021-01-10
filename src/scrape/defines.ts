@@ -1,6 +1,6 @@
 import { JSONSchema6 } from "json-schema";
 import { PageMeta } from "../interfaces";
-import { asUrlCorrectedMarkdown } from "../markdown";
+import { asUrlCorrectedMarkdown } from "../batteries/markdown";
 import type { Document } from "happy-dom";
 
 const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {

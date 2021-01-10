@@ -5,3 +5,5 @@ cached
 debug.d.ts
 **/factorio.schema.d.ts
 **/.factorio-ts-cache
+.factorio-ts-cache
+factorio.schema.json

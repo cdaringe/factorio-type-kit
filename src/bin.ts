@@ -1,4 +1,4 @@
-import { produce } from "./from-website";
+import { produce } from "./generate";
 
 produce({
   urls: {

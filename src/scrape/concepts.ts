@@ -1,8 +1,8 @@
 import { IDocument, IElement } from "happy-dom";
 import { JSONSchema6 } from "json-schema";
-import { query } from "../dom-extensions";
+import { query } from "../batteries/dom/dom-extensions";
 import { withType } from "../langs/typescript";
-import { asMarkdown } from "../markdown";
+import { asMarkdown } from "../batteries/markdown";
 import { parseParam } from "./classes";
 
 export const scrapeConcept = (el: IElement) => {

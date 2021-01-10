@@ -1,11 +1,11 @@
 import type { Document, IElement } from "happy-dom";
 import { JSONSchema6, JSONSchema6Definition } from "json-schema";
-import { filterWhile } from "../collections";
-import { query, queryAll, siblings } from "../dom-extensions";
+import { filterWhile } from "../batteries/collections";
+import { query, queryAll, siblings } from "../batteries/dom/dom-extensions";
 import { PageMeta } from "../interfaces";
-import { fromLuaType } from "../json-schema";
+import { fromLuaType } from "../factorio-meta/factorio-lua-json-schema";
 import { withType } from "../langs/typescript";
-import { asMarkdown, asUrlCorrectedMarkdown } from "../markdown";
+import { asMarkdown, asUrlCorrectedMarkdown } from "../batteries/markdown";
 
 const getDescription = (el: IElement, pageMeta: PageMeta): string => {
   if (!el) {

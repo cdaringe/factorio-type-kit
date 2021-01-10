@@ -2,15 +2,15 @@ import Bluebird from "bluebird";
 import { promises as fs } from "fs";
 import { JSONSchema6 } from "json-schema";
 import { compile } from "json-schema-to-typescript";
-import { getHtml } from "./browser";
-import { classNames as globalClassNames } from "./globals";
+import { getHtml } from "./html/producers";
+import { classNames as globalClassNames } from "./factorio-meta/globals";
 import { bigBadHacks } from "./hack";
-import { definitionTypes } from "./json-schema";
-import { sortKeys } from "./objects";
+import { definitionTypes } from "./factorio-meta/factorio-lua-json-schema";
+import { sortKeys } from "./batteries/objects";
 import { scrapeClassPage } from "./scrape/classes";
 import { scrapeConcepts } from "./scrape/concepts";
 import { scrapeDefines } from "./scrape/defines";
-import { loadVirtualPage, toDocument } from "./scrape/dom";
+import { ofUrl, toDocument } from "./scrape/dom";
 
 export const produce = async ({
   urls,
@@ -90,8 +90,7 @@ export const produce = async ({
 const getDefinesFromUrl = async (urlRoot: string) => {
   const pageBasename = "defines.html";
   const url = `${urlRoot}/${pageBasename}`;
-  const html = await getHtml({ url });
-  return scrapeDefines(toDocument(html), {
+  return scrapeDefines(await ofUrl(url), {
     baseUrl: url,
     pageBasename,
   });
@@ -100,8 +99,7 @@ const getDefinesFromUrl = async (urlRoot: string) => {
 const getConceptsFromUrl = async (urlRoot: string) => {
   const pageBasename = "Concepts.html";
   const url = `${urlRoot}/${pageBasename}`;
-  const html = await getHtml({ url });
-  return scrapeConcepts(toDocument(html));
+  return scrapeConcepts(await ofUrl(url));
 };
 
 const getClassesFromUrl = async (classLinks: { href: string }[]) =>
@@ -109,8 +107,7 @@ const getClassesFromUrl = async (classLinks: { href: string }[]) =>
     classLinks,
     async ({ href }) => {
       const parts = href.split("/");
-      const html = await getHtml({ url: href });
-      return scrapeClassPage(toDocument(html), {
+      return scrapeClassPage(await ofUrl(href), {
         baseUrl: href,
         pageBasename: parts[parts.length - 1],
       }).map((schema) => {
@@ -128,14 +125,12 @@ const getClassesFromUrl = async (classLinks: { href: string }[]) =>
       });
     },
     {
-      concurrency: 1, // 5,
+      concurrency: 5,
     }
   );
 
 const enumerateClassUrlsFromUrl = async (url: string) => {
-  const { document } = await getHtml({ url }).then((html) =>
-    loadVirtualPage(html)
-  );
+  const document = await ofUrl(url);
   const classRootEls = document.getElementById("Classes");
   const classEls =
     classRootEls.nextElementSibling.nextElementSibling.nextElementSibling

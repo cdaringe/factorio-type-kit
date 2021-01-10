@@ -1,4 +1,4 @@
-import { fromLuaType } from "../json-schema";
+import { fromLuaType } from "../factorio-meta/factorio-lua-json-schema";
 
 export const parseArgText = (text: string) => {
   const [name, r1] = text.split("::").map((s) => s.trim());

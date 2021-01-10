@@ -1,5 +1,5 @@
 import TurndownService from "turndown";
-import { PageMeta } from "./interfaces";
+import { PageMeta } from "../interfaces";
 
 export const asMarkdown = (s: string) => new TurndownService({}).turndown(s);
 
