@@ -10,6 +10,9 @@ declare module "json-schema" {
   }
 }
 
+const getDocBlock = (schema: JSONSchema6) =>
+  schema.description ? `/* ${schema.description} */\n  ` : "";
+
 const toTsType = (jtype: JSONSchema6): string => {
   // primitives
   const jtt = jtype.type;
@@ -81,9 +84,9 @@ export const withType = {
     const isRO = opts.parseMode
       ? !mode.some((rw: string) => !!rw.match(/w/i))
       : false;
-    return `${isRO ? "readonly " : ""}"${name}": ${toTsType(
-      schema.properties?.type as JSONSchema6
-    )}`;
+    return `${getDocBlock(schema)}${
+      isRO ? "readonly " : ""
+    }"${name}": ${toTsType(schema.properties?.type as JSONSchema6)}`;
   },
   method: (schema: JSONSchema6) => {
     const args = ((schema.items as JSONSchema6[]) || [])
@@ -98,13 +101,13 @@ export const withType = {
     if (!retSchema) {
       throw new Error("missing return value");
     }
-    return `(${args}) => ${toTsType(retSchema)}`;
+    return `${getDocBlock(schema)}(${args}) => ${toTsType(retSchema)}`;
   },
   class: (schema: JSONSchema6, opts: { asStruct?: boolean }) => {
-    const members = (schema.properties!.members as JSONSchema6)
-      .properties as Record<string, JSONSchema6>;
+    const members = schema.properties!.members as JSONSchema6;
+    const membersProperties = members.properties as Record<string, JSONSchema6>;
     const { properties: propNames, methods: methodNames } = Object.entries(
-      members as Record<string, JSONSchema6>
+      membersProperties
     ).reduce(
       (acc, [name, aSchema]) => {
         if (aSchema.properties?.return) acc.methods.push(name);
@@ -115,12 +118,12 @@ export const withType = {
     );
     const sort = (a: string, b: string) => a.localeCompare(b);
     const propStrs = propNames.sort(sort).map((name) => {
-      return withType.classProperty(name, members[name], {
+      return withType.classProperty(name, membersProperties[name], {
         parseMode: !opts?.asStruct,
       });
     });
     const methodStrs = methodNames.sort(sort).map((name) => {
-      return `${name}: ${withType.method(members[name])}`;
+      return `${name}: ${withType.method(membersProperties[name])}`;
     });
     return `
 {

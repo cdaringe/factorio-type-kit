@@ -235,11 +235,7 @@ const prefixDescription = (description: string) => (schema: JSONSchema6) => {
   return schema;
 };
 
-const scrapeClassFromEl = (
-  document: Document,
-  el: IElement,
-  pageMeta: PageMeta
-) => {
+const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
   const rootSiblings = el.children;
   const classNameEl = rootSiblings.find(
     (it) => "className" in it && it.className === "type-name"
@@ -291,7 +287,7 @@ const scrapeClassFromEl = (
 export const scrapeClassPage = (document: Document, pageMeta: PageMeta) => {
   const classEls = getClassListingEls(document);
   const classes = classEls
-    .map((el) => scrapeClassFromEl(document, el, pageMeta))
+    .map((el) => ofEl(document, el, pageMeta))
     .map(
       prefixDescription(
         getDescription(document.body.getElementsByTagName("h1")[0], pageMeta)

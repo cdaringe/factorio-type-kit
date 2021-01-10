@@ -6,6 +6,7 @@ import { getHtml } from "./browser";
 import { classNames as globalClassNames } from "./globals";
 import { bigBadHacks } from "./hack";
 import { definitionTypes } from "./json-schema";
+import { sortKeys } from "./objects";
 import { scrapeClassPage } from "./scrape/classes";
 import { scrapeConcepts } from "./scrape/concepts";
 import { scrapeDefines } from "./scrape/defines";
@@ -58,22 +59,15 @@ export const produce = async ({
     );
   }
 
-  const aFewDefinitions = Object.keys(definitions)
-    .slice(0, 1)
-    .reduce((acc, key) => {
-      acc[key] = definitions[key];
-      return acc;
-    }, {} as typeof definitions);
   const schema: JSONSchema6 = {
     type: "object",
     description: "Factorio Lua API",
     required: [...globalClassNames, "defines"],
     definitions,
-    properties: {
+    properties: sortKeys({
       ...definitions,
-      // ...aFewDefinitions,
       defines,
-    },
+    }),
     additionalProperties: false,
   };
   await fs.writeFile("factorio.schema.json", JSON.stringify(schema));
