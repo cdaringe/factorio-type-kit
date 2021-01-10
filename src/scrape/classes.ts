@@ -21,7 +21,7 @@ const getDescription = (el: IElement, pageMeta: PageMeta): string => {
   return getDescription(el.nextElementSibling, pageMeta);
 };
 
-const getClassListingEls = (document: Document) =>
+export const getClassListingEls = (document: Document) =>
   document.querySelectorAll(".brief-listing > .brief-listing");
 
 type MethodParams = JSONSchema6 & { items: Required<JSONSchema6>["items"] };
@@ -235,7 +235,7 @@ const prefixDescription = (description: string) => (schema: JSONSchema6) => {
   return schema;
 };
 
-const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
+export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
   const rootSiblings = el.children;
   const classNameEl = rootSiblings.find(
     (it) => "className" in it && it.className === "type-name"
