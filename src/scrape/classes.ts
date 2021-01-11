@@ -1,4 +1,4 @@
-import type { Document, IElement } from "happy-dom";
+import { Document, IElement, INode, Node } from "happy-dom";
 import { JSONSchema6, JSONSchema6Definition } from "json-schema";
 import { filterWhile } from "../batteries/collections";
 import { query, queryAll, siblings } from "../batteries/dom/dom-extensions";
@@ -36,15 +36,61 @@ interface Method extends JSONSchema6 {
   };
 }
 
-export const parseParam = (el: IElement): JSONSchema6 => {
-  const trim = (v: string) => v.trim();
-  // hack. remove grandchildren descriptors. yields worse types
-  el.querySelectorAll("li").forEach((child) =>
-    child.parentNode.removeChild(child)
+const getFieldList = (el: IElement) =>
+  Array.from(el.children).find((child) =>
+    child.classList.contains("field-list")
   );
+
+function testIsFieldListUl(el?: INode): el is IElement {
+  if (!el || el.nodeType === Node.TEXT_NODE) return false;
+  const elp = el as IElement;
+  return !!(elp.tagName.match(/ul/i) && elp.classList.contains("field-list"));
+}
+const getTableParamMeta = (elp: IElement) => {
+  const el = elp.cloneNode(true);
+  const fieldsUl = el.children.find(testIsFieldListUl);
+  if (!fieldsUl) throw new Error("didnt find field list");
+  el.removeChild(fieldsUl);
+  return { unparsedNameTypeText: el.textContent.trim(), fieldsUl };
+};
+
+type ParseParamRet = JSONSchema6 & { properties: { name: { const: string } } };
+export const parseParam = (el: IElement, i: number): ParseParamRet => {
+  const trim = (v: string) => v.trim();
+  const tableEl = getFieldList(el);
+  if (tableEl) {
+    const { fieldsUl, unparsedNameTypeText } = getTableParamMeta(el)!;
+    let [nameAndOptional, description] = unparsedNameTypeText
+      .split(":")
+      .map(trim);
+    // handle the `This is a description:` case
+    if (!description && nameAndOptional) {
+      description = nameAndOptional;
+      nameAndOptional = "";
+    }
+    const [name] = nameAndOptional.split("(optional)").map(trim);
+    const isOptional = name !== nameAndOptional;
+    const members = Array.from(fieldsUl.children).reduce((acc, el, j) => {
+      const prm = parseParam(el, j);
+      acc[prm.properties.name.const] = prm;
+      return acc;
+    }, {} as Record<string, JSONSchema6Definition>);
+    const schema: ParseParamRet = {
+      description,
+      type: "object",
+      properties: {
+        name: { const: name || `table_${i}` },
+        members: {
+          anyOf: [members, ...(isOptional ? [{ type: "null" as "null" }] : [])],
+        },
+      },
+    };
+    return schema;
+  }
   const txt = el.textContent.trim();
   // special case: factorio variadic splat
-  if (txt.startsWith("...")) return { type: "any" };
+  if (txt.startsWith("..."))
+    return { type: "any", properties: { name: { const: `arg_${i}` } } };
   // params with name :: type : description
   if (txt.includes("::")) {
     const [name, r1] = txt.split("::").map(trim);
@@ -64,10 +110,79 @@ export const parseParam = (el: IElement): JSONSchema6 => {
     return {
       description: description || "",
       properties: {
+        name: {
+          const: `arg_${i}`,
+        },
         type: fromLuaType(typeStr),
       },
     };
   }
+};
+
+export const parseImplEl = (implEl: IElement) => {
+  const id = implEl.id;
+  if (!id) throw new Error("unable to find id");
+  const name = id.split(".")[id.split(".").length - 1];
+  if (!name) throw new Error("missing impl fn name");
+  const signatureEl = query(
+    implEl,
+    ".element-name",
+    "failed to find signature el"
+  );
+  const signatureText = signatureEl.textContent || "";
+  /* eg: do_work(a,b,c) */
+  const stdFnCallMatch = signatureText.match(/\(((.|\s)*)\)/);
+  /* eg: set_controller{type=…, character=…, waypoints\n chart_mode_cutoff=…} */
+  const tableCallMatch = signatureText.match(/{((.|\s)*)}/);
+  let [, argsMatch] = stdFnCallMatch || tableCallMatch || [];
+  if (!argsMatch) {
+    throw new Error("failed to find args");
+  }
+  const argPlaceholders = argsMatch.split(",").map((v) => v.trim());
+  if (!argPlaceholders.length)
+    throw new Error("no args detected. fast parse should have executed");
+  const parametersHeadingEl = queryAll(implEl, ".detail-header").find(
+    (el) => el.textContent === "Parameters"
+  );
+  if (!parametersHeadingEl) {
+    throw new Error("missing parameter heading el");
+  }
+  const paramDivs = Array.from(
+    parametersHeadingEl.nextElementSibling?.children
+  ).filter((el) => el.tagName.match(/div/i));
+  let params: JSONSchema6[] = paramDivs
+    .filter((el) => el.textContent)
+    .map(parseParam);
+  if (stdFnCallMatch && argPlaceholders.length !== params.length) {
+    console.warn(
+      [
+        `unabled to parse params for ${name}.`,
+        `expected ${argPlaceholders.length} params, received ${params.length}.`,
+        "replacing all args with any",
+      ].join(" ")
+    );
+    params = params.map(() => ({ type: "any" }));
+  }
+  const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
+    (el) => el.textContent === "Return value"
+  )?.nextElementSibling;
+  const returnDescription = asMarkdown(
+    returnHeaderSiblingEl?.textContent || ""
+  );
+  const returnTypeText = query(signatureEl, ".return-type")?.textContent;
+  const isReturningNil = !signatureEl.textContent.match(/(→|&rarr;)/);
+  if (!returnTypeText && !isReturningNil) {
+    throw new Error("failed to find return type");
+  }
+  return {
+    name,
+    returnDescription,
+    isReturningNil,
+    params,
+    returnType: isReturningNil
+      ? ({ type: "null" } as JSONSchema6)
+      : fromLuaType(returnTypeText.trim()),
+  };
 };
 
 const parseMemberFunction = (document: Document, row: IElement) => {
@@ -108,60 +223,22 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   if (!implEl) {
     throw new Error("missing impl el");
   }
-  const id = implEl.id;
-  if (!id) throw new Error("unable to find id");
-  const name = id.split(".")[id.split(".").length - 1];
-  if (!name) throw new Error("missing impl fn name");
-  const signatureEl = query(
-    implEl,
-    ".element-name",
-    "failed to find signature el"
-  );
-  let [, argsMatch] = signatureEl.textContent.match(/((\(|{).*(\)|}))/) || [];
-  if (!argsMatch) {
-    throw new Error("failed to find args");
-  }
-  const argPlaceholders = argsMatch.split(",");
-  if (!argPlaceholders.length)
-    throw new Error("no args detected. fast parse should have executed");
-  const parametersHeadingEl = queryAll(implEl, ".detail-header").find(
-    (el) => el.textContent === "Parameters"
-  );
-  if (!parametersHeadingEl) {
-    throw new Error("missing parameter heading el");
-  }
-  const params = Array.from(
-    parametersHeadingEl.nextElementSibling.querySelectorAll(".field-list > li")
-  )
-    .filter((el) => el.textContent)
-    .map(parseParam);
-  const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
-    (el) => el.textContent === "Return value"
-  )?.nextElementSibling;
-  const returnDescription = asMarkdown(
-    returnHeaderSiblingEl?.textContent || ""
-  );
-  const returnTypeText = query(signatureEl, ".return-type")?.textContent;
-  const isReturningNil = !signatureEl.textContent.includes("→");
-  if (!returnTypeText && !isReturningNil) {
-    throw new Error("failed to find return type");
-  }
+  const impl = parseImplEl(implEl);
   const method: Method = {
     properties: {
       name: {
-        const: name,
+        const: impl.name,
       },
       parameters: {
         type: "array",
-        items: params,
+        items: impl.params,
       },
       return: {
-        description: returnDescription,
-        anyOf: (isReturningNil
-          ? [{ type: "null" } as JSONSchema6]
-          : [fromLuaType(returnTypeText.trim())]
-        )
-          .concat(returnDescription.match("or nil") ? [{ type: "null" }] : [])
+        description: impl.returnDescription,
+        anyOf: [impl.returnType]
+          .concat(
+            impl.returnDescription.match("or nil") ? [{ type: "null" }] : []
+          )
           .filter(Boolean),
       },
     },
@@ -177,6 +254,11 @@ const parseMemberAttr = (_document: Document, sigEl: IElement) => {
   ).textContent;
   const paramEl = query(sigEl!, ".param-type");
   const jsonSchemaAny: JSONSchema6 = { type: "any" };
+  const type = sigEl.textContent.includes("::")
+    ? paramEl
+      ? fromLuaType(paramEl.textContent)
+      : jsonSchemaAny
+    : jsonSchemaAny;
   const schema: JSONSchema6 = {
     properties: {
       name: {
@@ -184,13 +266,10 @@ const parseMemberAttr = (_document: Document, sigEl: IElement) => {
       },
       // see https://lua-api.factorio.com/latest/LuaItemStack.html connected_entity
       // some attrs just have no type information :/
-      type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
-        sigEl.textContent.match(m)
-      )
-        ? paramEl
-          ? fromLuaType(paramEl.textContent)
-          : jsonSchemaAny
-        : jsonSchemaAny,
+      // type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
+      //   sigEl.textContent.match(m)
+      // )
+      type,
       mode: {
         const:
           query(sigEl!, ".attribute-mode")
@@ -244,7 +323,7 @@ export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
   const name = classNameEl.textContent.trim();
   const inherits = filterWhile(
     rootSiblings,
-    (it) => it.tagName === "a",
+    (it) => !!(it.tagName || "").match(/^a$/i),
     (it) => it.className !== "sort"
   ).map((el) => el.textContent.trim());
   const membersRootEl = rootSiblings.find((it) =>

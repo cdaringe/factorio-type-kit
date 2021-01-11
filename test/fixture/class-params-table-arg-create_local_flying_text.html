@@ -1,0 +1,80 @@
+<div class="element" id="LuaPlayer.create_local_flying_text">
+  <div class="element-header">
+    <span class="element-name"
+      >create_local_flying_text{text=…, position=…, create_at_cursor=…, color=…,
+      time_to_live=…, speed=…}</span
+    >
+  </div>
+  <div class="element-content">
+    <p>Spawn a flying text that is only visible to this player.</p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <div class="detail">
+      <div class="detail-header">Parameters</div>
+      <div class="detail-content">
+        <div>
+          Table with the following fields:
+          <ul class="field-list">
+            <li>
+              <span class="param-name">text</span> ::
+              <span class="param-type"
+                ><a href="Concepts.html#LocalisedString"
+                  >LocalisedString</a
+                ></span
+              >
+            </li>
+            <li>
+              <span class="param-name">position</span> ::
+              <span class="param-type"
+                ><a href="Concepts.html#Position">Position</a></span
+              >
+              <span class="opt"> (optional)</span>
+            </li>
+            <li>
+              <span class="param-name">create_at_cursor</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#boolean">boolean</a></span
+              >
+              <span class="opt"> (optional)</span>
+            </li>
+            <li>
+              <span class="param-name">color</span> ::
+              <span class="param-type"
+                ><a href="Concepts.html#Color">Color</a></span
+              >
+              <span class="opt"> (optional)</span>
+            </li>
+            <li>
+              <span class="param-name">time_to_live</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#uint">uint</a></span
+              >
+              <span class="opt"> (optional)</span>
+            </li>
+            <li>
+              <span class="param-name">speed</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#double">double</a></span
+              >
+              <span class="opt"> (optional)</span>: Movement per second
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note">
+        <strong>Note: </strong> Local flying text is not saved, this means it
+        will disappear after save/load.
+      </div>
+      <div class="note">
+        <strong>Note: </strong> position or create_at_cursor is required.
+      </div>
+      <div class="note">
+        <strong>Note: </strong> when create_at_cursor is true all values except
+        'text' are ignored.
+      </div>
+    </div>
+  </div>
+</div>

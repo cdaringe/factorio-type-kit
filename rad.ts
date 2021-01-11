@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { Task, Tasks } from "https://deno.land/x/rad/src/mod.ts";
 
 const generateApiJson: Task = `docker run --rm -v $PWD:/app cdaringe/factorio-api-scraper:latest`;

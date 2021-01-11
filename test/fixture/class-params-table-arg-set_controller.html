@@ -1,0 +1,163 @@
+<div class="element" id="LuaPlayer.set_controller">
+  <div class="element-header">
+    <span class="element-name"
+      >set_controller{type=…, character=…, waypoints=…, start_position=…,
+      start_zoom=…, final_transition_time=…, chart_mode_cutoff=…}</span
+    >
+  </div>
+  <div class="element-content">
+    <p>Set the controller type of the player.</p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <div class="detail">
+      <div class="detail-header">Parameters</div>
+      <div class="detail-content">
+        <div>
+          Table with the following fields:
+          <ul class="field-list">
+            <li>
+              <span class="param-name">type</span> ::
+              <span class="param-type"
+                ><a href="defines.html#defines.controllers"
+                  >defines.controllers</a
+                ></span
+              >: Which controller to use
+            </li>
+            <li>
+              <span class="param-name">character</span> ::
+              <span class="param-type"
+                ><a href="LuaEntity.html">LuaEntity</a></span
+              >
+              <span class="opt"> (optional)</span>: Entity to control. Mandatory
+              when <code>type</code> is
+              <a href="defines.html#defines.controllers.character"
+                >defines.controllers.character</a
+              >, ignored otherwise.
+            </li>
+            <li>
+              <span class="param-name">waypoints</span
+              ><span class="opt"> (optional)</span>: List of waypoints for the
+              cutscene controller. This parameter is mandatory when
+              <code>type</code> is
+              <a href="defines.html#defines.controllers.cutscene"
+                >defines.controllers.cutscene</a
+              >. Each waypoint is a table:
+              <ul class="field-list">
+                <li>
+                  <span class="param-name">position</span> ::
+                  <span class="param-type"
+                    ><a href="Concepts.html#Position">Position</a></span
+                  >
+                  <span class="opt"> (optional)</span>: Position to pan the
+                  camera to.
+                </li>
+                <li>
+                  <span class="param-name">target</span> ::
+                  <span class="param-type"
+                    ><span class="param-type"
+                      ><a href="LuaEntity.html">LuaEntity</a></span
+                    >
+                    or
+                    <span class="param-type"
+                      ><a href="LuaUnitGroup.html">LuaUnitGroup</a></span
+                    ></span
+                  >
+                  <span class="opt"> (optional)</span>: Entity or unit group to
+                  pan the camera to.
+                </li>
+                <li>
+                  <span class="param-name">transition_time</span> ::
+                  <span class="param-type"
+                    ><a href="Builtin-Types.html#uint">uint</a></span
+                  >: How many ticks it will take to reach this waypoint from the
+                  previous one.
+                </li>
+                <li>
+                  <span class="param-name">time_to_wait</span> ::
+                  <span class="param-type"
+                    ><a href="Builtin-Types.html#uint">uint</a></span
+                  >: Time in ticks to wait before moving to the next waypoint.
+                </li>
+                <li>
+                  <span class="param-name">zoom</span> ::
+                  <span class="param-type"
+                    ><a href="Builtin-Types.html#double">double</a></span
+                  >
+                  <span class="opt"> (optional)</span>: Zoom level to be set
+                  when the waypoint is reached. When not specified, the previous
+                  waypoint's zoom is used.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <span class="param-name">start_position</span> ::
+              <span class="param-type"
+                ><a href="Concepts.html#Position">Position</a></span
+              >
+              <span class="opt"> (optional)</span>: If specified and
+              <code>type</code> is
+              <a href="defines.html#defines.controllers.cutscene"
+                >defines.controllers.cutscene</a
+              >, the cutscene will start at this position. If not given the
+              start position will be the player position.
+            </li>
+            <li>
+              <span class="param-name">start_zoom</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#double">double</a></span
+              >
+              <span class="opt"> (optional)</span>: If specified and
+              <code>type</code> is
+              <a href="defines.html#defines.controllers.cutscene"
+                >defines.controllers.cutscene</a
+              >, the cutscene will start at this zoom level. If not given the
+              start zoom will be the players zoom.
+            </li>
+            <li>
+              <span class="param-name">final_transition_time</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#uint">uint</a></span
+              >
+              <span class="opt"> (optional)</span>: If specified and
+              <code>type</code> is
+              <a href="defines.html#defines.controllers.cutscene"
+                >defines.controllers.cutscene</a
+              >, it is the time in ticks it will take for the camera to pan from
+              the final waypoint back to the starting position. If not given the
+              camera will not pan back to the start position/zoom.
+            </li>
+            <li>
+              <span class="param-name">chart_mode_cutoff</span> ::
+              <span class="param-type"
+                ><a href="Builtin-Types.html#double">double</a></span
+              >
+              <span class="opt"> (optional)</span>: If specified and
+              <code>type</code> is
+              <a href="defines.html#defines.controllers.cutscene"
+                >defines.controllers.cutscene</a
+              >, the game will switch to chart-mode (map zoomed out) rendering
+              when the zoom level is less than this value.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note">
+        <strong>Note: </strong> Setting a player to
+        <a href="defines.html#defines.controllers.editor"
+          >defines.controllers.editor</a
+        >
+        auto promotes the player to admin and enables cheat mode.
+      </div>
+      <div class="note">
+        <strong>Note: </strong> Setting a player to
+        <a href="defines.html#defines.controllers.editor"
+          >defines.controllers.editor</a
+        >
+        also requires the calling player be an admin.
+      </div>
+    </div>
+  </div>
+</div>

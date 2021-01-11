@@ -80,10 +80,11 @@ export const fromLuaType = (ltype_: string): JSONSchema6 => {
   }
   if (!definitionTypes.includes(ltype)) {
     definitionTypes.push(ltype.trim());
-    console.warn(`:::: Adding type ${ltype}`);
+    // console.warn(`:::: Adding type ${ltype}`);
   }
   const ref: JSONSchema6 = {};
   Object.defineProperty(ref, "$ref", {
+    enumerable: true,
     get() {
       if (bigBadHacks.isReadingRefs) return `#/definitions/${ltype}`;
       // return a def'n that has no children. such a weak defn has no children,

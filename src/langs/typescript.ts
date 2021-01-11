@@ -2,7 +2,7 @@
  * Exploit the https://www.npmjs.com/package/json-schema-to-typescript
  * tsType for usable TS definitions
  */
-import { JSONSchema6 } from "json-schema";
+import type { JSONSchema6, JSONSchema6Object } from "json-schema";
 
 declare module "json-schema" {
   interface JSONSchema6 {
@@ -84,6 +84,7 @@ export const withType = {
     const isRO = opts.parseMode
       ? !mode.some((rw: string) => !!rw.match(/w/i))
       : false;
+    if (!schema.properties?.type) debugger;
     return `${getDocBlock(schema)}${
       isRO ? "readonly " : ""
     }"${name}": ${toTsType(schema.properties?.type as JSONSchema6)}`;
@@ -101,7 +102,7 @@ export const withType = {
     if (!retSchema) {
       throw new Error("missing return value");
     }
-    return `${getDocBlock(schema)}(${args}) => ${toTsType(retSchema)}`;
+    return `(${args}) => ${toTsType(retSchema)}`;
   },
   class: (schema: JSONSchema6, opts: { asStruct?: boolean }) => {
     const members = schema.properties!.members as JSONSchema6;
@@ -123,8 +124,15 @@ export const withType = {
       });
     });
     const methodStrs = methodNames.sort(sort).map((name) => {
-      return `${name}: ${withType.method(membersProperties[name])}`;
+      const mSchema = membersProperties[name];
+      return `${getDocBlock(mSchema)}${name}: ${withType.method(mSchema)}`;
     });
+    const inheritsTypes: string[] =
+      (schema.properties as any)?.inherits?.items.map((it: any) => it?.const) ||
+      [];
+    const inheritsStr = inheritsTypes.length
+      ? ` & ${inheritsTypes.join(" & ")}`
+      : "";
     return `
 {
   ${propStrs.length ? "/* properties */" : ""}
@@ -132,6 +140,6 @@ export const withType = {
 
   ${methodStrs.length ? "/* methods */" : ""}
   ${methodStrs.map((it) => `  ${it};`).join("\n")}
-}`;
+}${inheritsStr}`;
   },
 };
