@@ -1,106 +1,35 @@
-import { JSONSchema6 } from "json-schema";
-import { PageMeta } from "../interfaces";
+import type { Document, IElement } from "happy-dom";
+import { queryAll } from "../batteries/dom/dom-extensions";
 import { asUrlCorrectedMarkdown } from "../batteries/markdown";
-import type { Document } from "happy-dom";
+import { PageMeta } from "../interfaces";
+import { Sym, sym } from "../ir/ir";
 
-const scrapeNestedDefines = (rootEl: Element, pageMeta: PageMeta) => {
-  const [headerEl, contentEl] = Array.from(rootEl.children) as [
-    HTMLElement,
-    HTMLElement
-  ];
+const scrapeNestedDefines = (rootEl: IElement, pageMeta: PageMeta): Sym[] => {
+  const [headerEl, contentEl] = rootEl.children;
   if (!headerEl || !contentEl) {
     throw new Error(`unexpected defines HTML structure ${rootEl.innerHTML}`);
   }
-  const name = headerEl.innerText.trim();
   const descriptionEl = Array.from(contentEl.children).find(
     (el) => el.tagName === "p"
   ) as HTMLElement | undefined;
 
-  const briefMembersEl = Array.from(contentEl.children).find(
-    (el) => el.className === "brief-members"
-  );
-  if (!briefMembersEl) {
-    throw new Error(`unable to locate brief-members el`);
-  }
-  const localFields = Array.from(briefMembersEl.querySelectorAll("tr")).map(
-    (el) => {
-      const parts = el.id.split(".");
-      return {
-        name: parts[parts.length - 1],
-        description: asUrlCorrectedMarkdown(
-          el.querySelector(".description")?.innerHTML.trim() || "",
-          pageMeta
-        ),
-      };
-    }
-  );
-
-  const localProperties = localFields.reduce((acc, { name, description }) => {
-    const subschema: JSONSchema6 = {
-      type: "string",
-      description,
-      // type: "object",
-    };
-    // hack for ts mapping support
-    Object.defineProperty(subschema, "tsType", {
-      enumerable: false,
-      get: () => "unknown",
-    });
-    return {
-      ...acc,
-      [name]: subschema,
-    };
-  }, {} as Required<JSONSchema6>["properties"]);
-
-  const nestedProperties = Array.from(contentEl.children)
-    .filter((el) => el.className === "element")
-    .map((v) => scrapeNestedDefines(v, pageMeta))
-    .reduce((acc, { name, schema }) => {
-      return {
-        ...acc,
-        [name]: schema,
-      };
-    }, {} as Required<JSONSchema6>["properties"]);
-
-  const schema: JSONSchema6 = {
-    type: "object",
-    description: descriptionEl?.innerText.trim() || "",
-    properties: {
-      ...localProperties,
-      ...nestedProperties,
-    },
-    required: [
-      ...Object.keys(localProperties),
-      ...Object.keys(nestedProperties),
-    ],
-    additionalProperties: false,
-  };
-  return { name, schema };
-};
-
-export const scrapeDefines = (document: Document, pageMeta: PageMeta) => {
-  const l2s = Array.from(document.querySelectorAll("body > .element")).map(
-    (l1) => {
-      const { name, schema } = scrapeNestedDefines(
-        (l1 as any) as Element,
+  const memberRows = Array.from(
+    queryAll(contentEl, ".brief-members")
+  ).flatMap((el) => el.querySelectorAll("tr"));
+  return memberRows.map((el) => {
+    if (!el.id) throw new Error("missing id");
+    return sym(el.id, {
+      description: asUrlCorrectedMarkdown(
+        el.querySelector(".description")?.innerHTML.trim() || "",
         pageMeta
-      );
-      return { name, schema };
-    }
-  );
-  const schema: JSONSchema6 = {
-    type: "object",
-    description:
-      "Factorio constants, persistent handles.\n@{see https://lua-api.factorio.com/latest/defines.html}\nFactorio does not include types associated with defines :/",
-    properties: l2s.reduce(
-      (acc, { name, schema }) => ({
-        ...acc,
-        [name]: schema,
-      }),
-      {}
-    ),
-    required: l2s.map(({ name }) => name),
-    additionalProperties: false,
-  };
-  return schema;
+      ),
+    });
+  });
 };
+
+// "Factorio constants, persistent handles.\n@{see https://lua-api.factorio.com/latest/defines.html}\nFactorio does not include types associated with defines :/",
+export const scrapeDefines = (document: Document, pageMeta: PageMeta) =>
+  document
+    .querySelectorAll("body > .element")
+    .flatMap((l1) => scrapeNestedDefines(l1, pageMeta))
+    .sort((a, b) => a.text.localeCompare(b.text));

@@ -27,64 +27,65 @@ export const produce = async ({
     getDefinesFromUrl(urls.apiRoot),
     getConceptsFromUrl(urls.apiRoot),
   ]);
-  const definitions = [
-    ...classSchemas.map(({ schema, className }) => ({
-      key: className,
-      schema,
-    })),
-    ...concepts.map((c) => {
-      const key = (c.properties?.name as JSONSchema6).const;
-      if (typeof key !== "string") throw new Error("missing concept name");
-      return {
-        key,
-        schema: c,
-      };
-    }),
-  ].reduce((acc, { schema, key }) => {
-    acc[key] = schema;
-    return acc;
-  }, {} as Required<JSONSchema6>["definitions"]);
 
-  // reveal the types we do not have schemas for
-  const rootDtTypes = new Set(Object.keys(definitions));
-  const dtTypes = new Set(definitionTypes);
-  rootDtTypes.forEach((t) => dtTypes.delete(t));
-  if (dtTypes.size) {
-    throw new Error(
-      `missing schemas for ${JSON.stringify(
-        Array.from(dtTypes.values()),
-        null,
-        2
-      )}`
-    );
-  }
+  // const definitions = [
+  //   ...classSchemas.map(({ schema, className }) => ({
+  //     key: className,
+  //     schema,
+  //   })),
+  //   ...concepts.map((c) => {
+  //     const key = (c.properties?.name as JSONSchema6).const;
+  //     if (typeof key !== "string") throw new Error("missing concept name");
+  //     return {
+  //       key,
+  //       schema: c,
+  //     };
+  //   }),
+  // ].reduce((acc, { schema, key }) => {
+  //   acc[key] = schema;
+  //   return acc;
+  // }, {} as Required<JSONSchema6>["definitions"]);
 
-  const schema: JSONSchema6 = {
-    type: "object",
-    description: "Factorio Lua API",
-    required: [...globalClassNames, "defines"],
-    definitions,
-    properties: sortKeys({
-      ...definitions,
-      defines,
-    }),
-    additionalProperties: false,
-  };
-  await fs.writeFile("factorio.schema.json", JSON.stringify(schema));
-  bigBadHacks.isReadingRefs = false;
-  const tso = await compile(schema as any, "FactorioApi", {
-    format: false,
-    $refOptions: {
-      resolve: {
-        external: false,
-        file: false,
-      } as any,
-      dereference: {
-        circular: "ignore",
-      },
-    },
-  });
-  await fs.writeFile("factorio.schema.d.ts", tso);
+  // // reveal the types we do not have schemas for
+  // const rootDtTypes = new Set(Object.keys(definitions));
+  // const dtTypes = new Set(definitionTypes);
+  // rootDtTypes.forEach((t) => dtTypes.delete(t));
+  // if (dtTypes.size) {
+  //   throw new Error(
+  //     `missing schemas for ${JSON.stringify(
+  //       Array.from(dtTypes.values()),
+  //       null,
+  //       2
+  //     )}`
+  //   );
+  // }
+
+  // const schema: JSONSchema6 = {
+  //   type: "object",
+  //   description: "Factorio Lua API",
+  //   required: [...globalClassNames, "defines"],
+  //   definitions,
+  //   properties: sortKeys({
+  //     ...definitions,
+  //     defines,
+  //   }),
+  //   additionalProperties: false,
+  // };
+  // await fs.writeFile("factorio.schema.json", JSON.stringify(schema));
+  // bigBadHacks.isReadingRefs = false;
+  // const tso = await compile(schema as any, "FactorioApi", {
+  //   format: false,
+  //   $refOptions: {
+  //     resolve: {
+  //       external: false,
+  //       file: false,
+  //     } as any,
+  //     dereference: {
+  //       circular: "ignore",
+  //     },
+  //   },
+  // });
+  // await fs.writeFile("factorio.schema.d.ts", tso);
 };
 
 const getDefinesFromUrl = async (urlRoot: string) => {
@@ -110,18 +111,6 @@ const getClassesFromUrl = async (classLinks: { href: string }[]) =>
       return scrapeClassPage(await ofUrl(href), {
         baseUrl: href,
         pageBasename: parts[parts.length - 1],
-      }).map((schema) => {
-        const classNameSchema = schema?.properties?.name;
-        if (typeof classNameSchema === "boolean")
-          throw new Error("invalid classNameSchema");
-        if (!classNameSchema) throw new Error(`class schema missing name prop`);
-        const className = classNameSchema.const;
-        if (typeof className !== "string")
-          throw new Error("invalid class schema, property `name` Schema");
-        return {
-          className,
-          schema,
-        };
       });
     },
     {

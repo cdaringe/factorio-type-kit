@@ -1,11 +1,25 @@
 import { Document, IElement, INode, Node } from "happy-dom";
-import { JSONSchema6, JSONSchema6Definition } from "json-schema";
 import { filterWhile } from "../batteries/collections";
-import { query, queryAll, siblings } from "../batteries/dom/dom-extensions";
-import { PageMeta } from "../interfaces";
-import { fromLuaType } from "../factorio-meta/factorio-lua-json-schema";
-import { withType } from "../langs/typescript";
+import { query, queryAll } from "../batteries/dom/dom-extensions";
 import { asMarkdown, asUrlCorrectedMarkdown } from "../batteries/markdown";
+import { PageMeta } from "../interfaces";
+import {
+  ClassMember,
+  Cls,
+  cls,
+  field,
+  fn,
+  objectLiteral,
+  ofLua,
+  param,
+  Param,
+  property,
+  sym,
+  Type,
+  union,
+} from "../ir/ir";
+
+const trim = (v: string) => v.trim();
 
 const getDescription = (el: IElement, pageMeta: PageMeta): string => {
   if (!el) {
@@ -23,18 +37,6 @@ const getDescription = (el: IElement, pageMeta: PageMeta): string => {
 
 export const getClassListingEls = (document: Document) =>
   document.querySelectorAll(".brief-listing > .brief-listing");
-
-type MethodParams = JSONSchema6 & { items: Required<JSONSchema6>["items"] };
-
-interface Method extends JSONSchema6 {
-  properties: {
-    name: {
-      const: string;
-    };
-    parameters: MethodParams;
-    return: JSONSchema6;
-  };
-}
 
 const getFieldList = (el: IElement) =>
   Array.from(el.children).find((child) =>
@@ -54,9 +56,38 @@ const getTableParamMeta = (elp: IElement) => {
   return { unparsedNameTypeText: el.textContent.trim(), fieldsUl };
 };
 
-type ParseParamRet = JSONSchema6 & { properties: { name: { const: string } } };
-export const parseParam = (el: IElement, i: number): ParseParamRet => {
-  const trim = (v: string) => v.trim();
+export const getParamFromRow = (el: IElement): Param => {
+  const txt = el.textContent.trim();
+  // special case: factorio variadic splat
+  if (txt.startsWith("..."))
+    return param({
+      name: "variadic_args",
+      type: "any",
+      isOptional: true,
+      description: "",
+      isVariadic: true,
+    });
+  // params with name :: type : description
+  if (txt.includes("::")) {
+    const [name, r1] = txt.split("::").map(trim);
+    const [typeStr, description] = r1.split(":").map(trim);
+    return param({
+      description,
+      name,
+      type: ofLua(typeStr),
+    });
+  } else {
+    // params with type : description
+    const [typeStr, description] = txt.split(":").map(trim);
+    return param({
+      description: description || "",
+      name: `arg`,
+      type: ofLua(typeStr),
+    });
+  }
+};
+
+export const parseParam = (el: IElement, i: number): Param => {
   const tableEl = getFieldList(el);
   if (tableEl) {
     const { fieldsUl, unparsedNameTypeText } = getTableParamMeta(el)!;
@@ -72,54 +103,20 @@ export const parseParam = (el: IElement, i: number): ParseParamRet => {
     const isOptional = name !== nameAndOptional;
     const members = Array.from(fieldsUl.children).reduce((acc, el, j) => {
       const prm = parseParam(el, j);
-      acc[prm.properties.name.const] = prm;
+      acc[prm.name] = field({ type: prm.type, description: prm.description });
       return acc;
-    }, {} as Record<string, JSONSchema6Definition>);
-    const schema: ParseParamRet = {
+    }, {} as Record<string, Type>);
+    return param({
       description,
-      type: "object",
-      properties: {
-        name: { const: name || `table_${i}` },
-        members: {
-          anyOf: [members, ...(isOptional ? [{ type: "null" as "null" }] : [])],
-        },
-      },
-    };
-    return schema;
+      name: name || `table_${i}`,
+      type: objectLiteral(members),
+      isOptional,
+    });
   }
-  const txt = el.textContent.trim();
-  // special case: factorio variadic splat
-  if (txt.startsWith("..."))
-    return { type: "any", properties: { name: { const: `arg_${i}` } } };
-  // params with name :: type : description
-  if (txt.includes("::")) {
-    const [name, r1] = txt.split("::").map(trim);
-    const [typeStr, description] = r1.split(":").map(trim);
-    return {
-      description: description || "",
-      properties: {
-        name: {
-          const: name,
-        },
-        type: fromLuaType(typeStr),
-      },
-    };
-  } else {
-    // params with type : description
-    const [typeStr, description] = txt.split(":").map(trim);
-    return {
-      description: description || "",
-      properties: {
-        name: {
-          const: `arg_${i}`,
-        },
-        type: fromLuaType(typeStr),
-      },
-    };
-  }
+  return getParamFromRow(el);
 };
 
-export const parseImplEl = (implEl: IElement) => {
+export const parseImplEl = (implEl: IElement, description: string) => {
   const id = implEl.id;
   if (!id) throw new Error("unable to find id");
   const name = id.split(".")[id.split(".").length - 1];
@@ -150,9 +147,7 @@ export const parseImplEl = (implEl: IElement) => {
   const paramDivs = Array.from(
     parametersHeadingEl.nextElementSibling?.children
   ).filter((el) => el.tagName.match(/div/i));
-  let params: JSONSchema6[] = paramDivs
-    .filter((el) => el.textContent)
-    .map(parseParam);
+  let params = paramDivs.filter((el) => el.textContent).map(parseParam);
   if (stdFnCallMatch && argPlaceholders.length !== params.length) {
     console.warn(
       [
@@ -161,7 +156,9 @@ export const parseImplEl = (implEl: IElement) => {
         "replacing all args with any",
       ].join(" ")
     );
-    params = params.map(() => ({ type: "any" }));
+    params = params.map((_, i) =>
+      param({ name: `param_${i}`, description: "", type: "any" })
+    );
   }
   const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
     (el) => el.textContent === "Return value"
@@ -169,23 +166,32 @@ export const parseImplEl = (implEl: IElement) => {
   const returnDescription = asMarkdown(
     returnHeaderSiblingEl?.textContent || ""
   );
-  const returnTypeText = query(signatureEl, ".return-type")?.textContent;
+  const returnTypeText =
+    query(signatureEl, ".return-type")?.textContent || "nil";
   const isReturningNil = !signatureEl.textContent.match(/(→|&rarr;)/);
   if (!returnTypeText && !isReturningNil) {
     throw new Error("failed to find return type");
   }
-  return {
+  const returnType = ofLua(returnTypeText.trim());
+  const isReturnDescriptionPermittingNil = returnDescription.match("or nil");
+  return fn({
+    description,
     name,
+    parameters: params,
+    return: isReturningNil
+      ? "null"
+      : isReturnDescriptionPermittingNil
+      ? union(returnType, "null")
+      : returnType,
     returnDescription,
-    isReturningNil,
-    params,
-    returnType: isReturningNil
-      ? ({ type: "null" } as JSONSchema6)
-      : fromLuaType(returnTypeText.trim()),
-  };
+  });
 };
 
-const parseMemberFunction = (document: Document, row: IElement) => {
+const parseMemberFunction = (
+  document: Document,
+  row: IElement,
+  description: string
+) => {
   const el = query(
     row,
     ".element-name",
@@ -194,27 +200,20 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   const implAnchor = query(el, "a", "missing impl anchor");
   // fast parse when there are no args
   if (el.textContent.includes("()")) {
-    const method: Method = {
-      properties: {
-        name: {
-          const: implAnchor.textContent,
-        },
-        parameters: {
-          type: "array",
-          items: [],
-        },
-        return: el.textContent.includes("→")
-          ? fromLuaType(
-              query(
-                el,
-                ".return-type",
-                "unable to find return type"
-              ).textContent.trim()
-            )
-          : { type: "null" },
-      },
-    };
-    return method;
+    return fn({
+      description,
+      name: implAnchor.textContent,
+      parameters: [],
+      return: el.textContent.includes("→")
+        ? ofLua(
+            query(
+              el,
+              ".return-type",
+              "unable to find return type"
+            ).textContent.trim()
+          )
+        : "null",
+    });
   }
   // slow parse when no arg case fails
   const implHref = implAnchor.getAttribute("href");
@@ -223,80 +222,52 @@ const parseMemberFunction = (document: Document, row: IElement) => {
   if (!implEl) {
     throw new Error("missing impl el");
   }
-  const impl = parseImplEl(implEl);
-  const method: Method = {
-    properties: {
-      name: {
-        const: impl.name,
-      },
-      parameters: {
-        type: "array",
-        items: impl.params,
-      },
-      return: {
-        description: impl.returnDescription,
-        anyOf: [impl.returnType]
-          .concat(
-            impl.returnDescription.match("or nil") ? [{ type: "null" }] : []
-          )
-          .filter(Boolean),
-      },
-    },
-  };
-  return method;
+  return parseImplEl(implEl, description);
 };
 
-const parseMemberAttr = (_document: Document, sigEl: IElement) => {
+const parseMemberAttr = (
+  _document: Document,
+  sigEl: IElement,
+  description: string
+) => {
   const paramName = query(
     sigEl!,
     ".element-name",
     "failed to find member attr name element"
   ).textContent;
   const paramEl = query(sigEl!, ".param-type");
-  const jsonSchemaAny: JSONSchema6 = { type: "any" };
-  const type = sigEl.textContent.includes("::")
+  const type: Type = sigEl.textContent.includes("::")
     ? paramEl
-      ? fromLuaType(paramEl.textContent)
-      : jsonSchemaAny
-    : jsonSchemaAny;
-  const schema: JSONSchema6 = {
-    properties: {
-      name: {
-        const: paramName,
-      },
-      // see https://lua-api.factorio.com/latest/LuaItemStack.html connected_entity
-      // some attrs just have no type information :/
-      // type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
-      //   sigEl.textContent.match(m)
-      // )
-      type,
-      mode: {
-        const:
-          query(sigEl!, ".attribute-mode")
-            ?.textContent.split("")
-            .filter((v) => !!v.match(/(R|W|X)/i)) || [],
-      },
-    },
-  };
-  return schema;
+      ? ofLua(paramEl.textContent)
+      : "any"
+    : "any";
+  return property({
+    name: paramName,
+    description,
+    // see https://lua-api.factorio.com/latest/LuaItemStack.html connected_entity
+    // some attrs just have no type information :/
+    // type: [/[a-zA-Z0-9_-]+ (\[\])?\S?\[/].some((m) =>
+    //   sigEl.textContent.match(m)
+    // )
+    type,
+    isReadonly:
+      !query(sigEl!, ".attribute-mode")?.textContent.match(/(W|X)/i) || false,
+  });
 };
 const parseMemberRow = (
   document: Document,
   row: IElement,
   pageMeta: PageMeta
-) => {
+): ClassMember => {
   const [signatureEl, descriptionEl] = row.children;
   if (!signatureEl) throw new Error("unable to find member signature el");
   const description = asUrlCorrectedMarkdown(
     descriptionEl?.textContent || "",
     pageMeta
   );
-  return {
-    description,
-    ...(signatureEl.textContent.match(/\[.+\]/)
-      ? parseMemberAttr(document, signatureEl)
-      : parseMemberFunction(document, signatureEl)),
-  };
+  return signatureEl.textContent.match(/\[.+\]/)
+    ? parseMemberAttr(document, signatureEl, description)
+    : parseMemberFunction(document, signatureEl, description);
 };
 const parseMemberRows = (
   document: Document,
@@ -304,7 +275,7 @@ const parseMemberRows = (
   pageMeta: PageMeta
 ) => rows.map((row) => parseMemberRow(document, row, pageMeta));
 
-const prefixDescription = (description: string) => (schema: JSONSchema6) => {
+const prefixDescription = (description: string) => (schema: Cls) => {
   if (!description) return schema;
   if (!schema.description) {
     schema.description = description;
@@ -325,7 +296,7 @@ export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
     rootSiblings,
     (it) => !!(it.tagName || "").match(/^a$/i),
     (it) => it.className !== "sort"
-  ).map((el) => el.textContent.trim());
+  ).map((el) => sym(el.textContent.trim()));
   const membersRootEl = rootSiblings.find((it) =>
     it.classList.contains("brief-members")
   );
@@ -336,41 +307,18 @@ export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
     queryAll(membersRootEl, "tr"),
     pageMeta
   );
-  const schema: JSONSchema6 = {
-    properties: {
-      name: {
-        const: name,
-      },
-      members: {
-        type: "object",
-        properties: members.reduce((acc, schema) => {
-          acc[
-            (schema.properties?.name as JSONSchema6).const as string
-          ] = schema;
-          return acc;
-        }, {} as Required<JSONSchema6>["properties"]),
-      },
-      inherits: {
-        type: "array",
-        items: inherits.map((className) => ({ const: className })),
-      },
-    },
-  };
-  Object.defineProperty(schema, "tsType", {
-    value: withType.class(schema, { asStruct: false }),
-    enumerable: false,
+  return cls({
+    name,
+    description: getDescription(
+      document.body.getElementsByTagName("h1")[0],
+      pageMeta
+    ),
+    members,
+    inherits,
   });
-  return schema;
 };
 
 export const scrapeClassPage = (document: Document, pageMeta: PageMeta) => {
   const classEls = getClassListingEls(document);
-  const classes = classEls
-    .map((el) => ofEl(document, el, pageMeta))
-    .map(
-      prefixDescription(
-        getDescription(document.body.getElementsByTagName("h1")[0], pageMeta)
-      )
-    );
-  return classes;
+  return classEls.map((el) => ofEl(document, el, pageMeta));
 };
