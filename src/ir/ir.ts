@@ -104,7 +104,8 @@ export type Type =
   | Property
   | Struct
   | Sym
-  | Union;
+  | Union
+  | TypeDecl;
 
 export type Param = {
   name: string;
@@ -137,6 +138,12 @@ type StructLike = {
 export type Struct = StructLike & IRCommon<"struct">;
 
 export const struct = factory<Struct>("struct");
+
+export type TypeDecl = {
+  name: string;
+  type: Type;
+} & IRCommon<"typedecl">;
+export const typdecl = factory<TypeDecl>("typedecl");
 
 export type Intf = {
   name: string;

@@ -1,4 +1,4 @@
-import { intf, testIsType, Type } from "./ir";
+import { Type } from "./ir";
 
 export const printInner = (t: Type): string => {
   switch (t.__type) {
@@ -56,6 +56,8 @@ export const printInner = (t: Type): string => {
     case "boolean":
     case "any":
       return t.__type;
+    case "typedecl":
+      return `type ${t.name} = ${print(t.type)}`;
     default:
       // exhaustive match check
       return ((arg: never) => {
