@@ -7,6 +7,13 @@ const bootstrap: Task = `yarn && npx lerna bootstrap`;
 const format: Task = `npx prettier --write .`;
 const test: Task = `npx ava --coverage`;
 const run: Task = `node -r ts-node/register/transpile-only src/bin.ts`;
+
+const runAndFormat: Task = {
+  fn: async ({ sh }: any) => {
+    await sh(run);
+    await sh(format);
+  },
+};
 export const tasks: Tasks = {
   ...{ generateApiJson, gaj: generateApiJson },
   ...{ format, f: format },
@@ -15,4 +22,5 @@ export const tasks: Tasks = {
   ...{ bootstrap, b: bootstrap },
   ...{ run, r: run },
   ...{ test, t: test },
+  ...{ runAndFormat, raf: runAndFormat },
 };

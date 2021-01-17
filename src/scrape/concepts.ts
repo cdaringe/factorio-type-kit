@@ -1,7 +1,7 @@
 import { IDocument, IElement } from "happy-dom";
 import { query } from "../batteries/dom/dom-extensions";
 import { asMarkdown } from "../batteries/markdown";
-import { property, struct, testIsTypeFn } from "../ir/ir";
+import { fn, property, struct, testIsType } from "../ir/ir";
 import { parseParam } from "./classes";
 
 export const scrapeConcept = (el: IElement) => {
@@ -23,7 +23,7 @@ export const scrapeConcept = (el: IElement) => {
     name,
     description,
     members: fields.map((field) => {
-      if (testIsTypeFn(field.type)) {
+      if (testIsType(field.type, fn)) {
         // @todo - did we just throw away a bunch of info? do we actually expect this case?
         return field.type;
       }

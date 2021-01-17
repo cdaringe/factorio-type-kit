@@ -1,16 +1,10 @@
 import Bluebird from "bluebird";
-import { promises as fs } from "fs";
-import { JSONSchema6 } from "json-schema";
-import { compile } from "json-schema-to-typescript";
-import { getHtml } from "./html/producers";
-import { classNames as globalClassNames } from "./factorio-meta/globals";
-import { bigBadHacks } from "./hack";
-import { definitionTypes } from "./factorio-meta/factorio-lua-json-schema";
-import { sortKeys } from "./batteries/objects";
 import { scrapeClassPage } from "./scrape/classes";
 import { scrapeConcepts } from "./scrape/concepts";
 import { scrapeDefines } from "./scrape/defines";
-import { ofUrl, toDocument } from "./scrape/dom";
+import { ofUrl } from "./scrape/dom";
+import { printer } from "./ir/ir";
+import { promises as fs } from "fs";
 
 export const produce = async ({
   urls,
@@ -27,7 +21,11 @@ export const produce = async ({
     getDefinesFromUrl(urls.apiRoot),
     getConceptsFromUrl(urls.apiRoot),
   ]);
-
+  const printed = [
+    `/** @noSelfInFile */`,
+    printer.print(defines),
+    ...concepts.map(printer.print),
+  ].join("\n");
   // const definitions = [
   //   ...classSchemas.map(({ schema, className }) => ({
   //     key: className,
@@ -85,7 +83,7 @@ export const produce = async ({
   //     },
   //   },
   // });
-  // await fs.writeFile("factorio.schema.d.ts", tso);
+  await fs.writeFile("factorio.schema.d.ts", printed);
 };
 
 const getDefinesFromUrl = async (urlRoot: string) => {

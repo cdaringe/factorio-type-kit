@@ -1,15 +1,33 @@
 import { definitionTypes } from "../factorio-meta/factorio-lua-json-schema";
 import { unmodeled } from "../factorio-meta/unmodeled-entities";
-import { union, map, optional, Type, arr, sym } from "./ir";
+import {
+  any,
+  arr,
+  bool,
+  map,
+  nil,
+  num,
+  optional,
+  str,
+  sym,
+  Type,
+  union,
+} from "./ir";
+
+const description = "";
+
 export const ofLua = (ltype_: string): Type => {
   const ltype = ltype_.trim().replace("&rarr;", "→");
   if (!ltype) {
     throw new Error("no type to convert");
   }
   if (ltype.match(/\(optional\)$/)) {
-    return optional(ofLua(ltype.replace(/\(optional\)$/, "")));
+    return optional({
+      type: ofLua(ltype.replace(/\(optional\)$/, "")),
+      description,
+    });
   }
-  if (ltype.includes("optional")) debugger;
+  // if (ltype.includes("optional")) debugger;
   if (ltype.match(/^(dictionary|CustomDictionary)(.*)/)) {
     const dictionaryParts = ltype.match(
       /^(dictionary|CustomDictionary)([^→]*)→(.*)/
@@ -18,14 +36,18 @@ export const ofLua = (ltype_: string): Type => {
       throw new Error("unable to parse dict types");
     }
     const [, _dict, lhs, rhs] = dictionaryParts.map((v) => v.trim());
-    return map(ofLua(lhs), ofLua(rhs.trim()));
+    return map({
+      keyType: ofLua(lhs),
+      valueType: ofLua(rhs.trim()),
+      description,
+    });
   }
   if (ltype.match(" or ")) {
-    return union(...ltype.split(" or ").map(ofLua));
+    return union({ members: ltype.split(" or ").map(ofLua), description });
   }
   if (ltype.match(/^(array of)(.*)/)) {
     const [, , rest] = ltype.match(/^(array of)(.*)/)!;
-    return arr(ofLua(rest.trim()));
+    return arr({ valueType: ofLua(rest.trim()), description });
   }
   switch (ltype) {
     case "int":
@@ -40,23 +62,23 @@ export const ofLua = (ltype_: string): Type => {
     case "uint":
     case "double":
     case "float":
-      return "number";
+      return num({ description });
     case "string":
-      return "string";
+      return str({ description });
     case "boolean":
-      return "boolean";
+      return bool({ description });
     case "nil":
-      return "null";
+      return nil({ description });
   }
   if (ltype.match(/defines\..+/)) {
-    return sym(ltype);
+    return sym({ text: ltype });
   }
   if (unmodeled.includes(ltype)) {
-    return "any";
+    return any({});
   }
   if (!definitionTypes.includes(ltype)) {
     definitionTypes.push(ltype.trim());
     console.warn(`:: Adding type ${ltype}`);
   }
-  return sym(ltype);
+  return sym({ text: ltype });
 };

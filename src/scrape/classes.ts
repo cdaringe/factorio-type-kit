@@ -4,13 +4,16 @@ import { query, queryAll } from "../batteries/dom/dom-extensions";
 import { asMarkdown, asUrlCorrectedMarkdown } from "../batteries/markdown";
 import { PageMeta } from "../interfaces";
 import {
+  any,
   ClassMember,
   Cls,
   cls,
   field,
   fn,
+  nil,
   objectLiteral,
   ofLua,
+  optional,
   param,
   Param,
   property,
@@ -62,13 +65,23 @@ export const getParamFromRow = (el: IElement): Param => {
   if (txt.startsWith("..."))
     return param({
       name: "variadic_args",
-      type: "any",
+      type: any({}),
       isOptional: true,
       description: "",
       isVariadic: true,
     });
   // params with name :: type : description
   if (txt.includes("::")) {
+    if (txt.match(/^Depending on/)) {
+      // @todo - Concepts often specify a "Depending on" clause. This is more advanced
+      // parsing and generally influences the the prior mentioned field. Support it, eventually.
+      return param({
+        name: "_",
+        isOptional: true,
+        description: "depends on modifier - unimplemented",
+        type: any({}),
+      });
+    }
     const [name, r1] = txt.split("::").map(trim);
     const [typeStr, description] = r1.split(":").map(trim);
     return param({
@@ -99,7 +112,7 @@ export const parseParam = (el: IElement, i: number): Param => {
       description = nameAndOptional;
       nameAndOptional = "";
     }
-    const [name] = nameAndOptional.split("(optional)").map(trim);
+    let [name] = nameAndOptional.split("(optional)").map(trim);
     const isOptional = name !== nameAndOptional;
     const members = Array.from(fieldsUl.children).reduce((acc, el, j) => {
       const prm = parseParam(el, j);
@@ -109,7 +122,7 @@ export const parseParam = (el: IElement, i: number): Param => {
     return param({
       description,
       name: name || `table_${i}`,
-      type: objectLiteral(members),
+      type: objectLiteral(members)(),
       isOptional,
     });
   }
@@ -157,7 +170,7 @@ export const parseImplEl = (implEl: IElement, description: string) => {
       ].join(" ")
     );
     params = params.map((_, i) =>
-      param({ name: `param_${i}`, description: "", type: "any" })
+      param({ name: `param_${i}`, description: "", type: any({}) })
     );
   }
   const returnHeaderSiblingEl = queryAll(implEl, ".detail-header").find(
@@ -179,9 +192,9 @@ export const parseImplEl = (implEl: IElement, description: string) => {
     name,
     parameters: params,
     return: isReturningNil
-      ? "null"
+      ? nil({ description: "" })
       : isReturnDescriptionPermittingNil
-      ? union(returnType, "null")
+      ? union({ members: [returnType, nil({ description: "" })], description })
       : returnType,
     returnDescription,
   });
@@ -212,7 +225,7 @@ const parseMemberFunction = (
               "unable to find return type"
             ).textContent.trim()
           )
-        : "null",
+        : nil({ description: "" }),
     });
   }
   // slow parse when no arg case fails
@@ -239,8 +252,8 @@ const parseMemberAttr = (
   const type: Type = sigEl.textContent.includes("::")
     ? paramEl
       ? ofLua(paramEl.textContent)
-      : "any"
-    : "any";
+      : any({})
+    : any({});
   return property({
     name: paramName,
     description,
@@ -296,7 +309,7 @@ export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
     rootSiblings,
     (it) => !!(it.tagName || "").match(/^a$/i),
     (it) => it.className !== "sort"
-  ).map((el) => sym(el.textContent.trim()));
+  ).map((el) => sym({ text: el.textContent.trim() }));
   const membersRootEl = rootSiblings.find((it) =>
     it.classList.contains("brief-members")
   );

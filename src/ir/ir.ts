@@ -3,199 +3,164 @@
  */
 
 export type WithDescription = { description: string };
-export type WithType<T> = { __type: T };
+export type WithType<T extends string> = { __type: T };
+export type IRCommon<T extends string> = WithType<T> & WithDescription;
+export type IRFactoryParam<T> = Omit<T, "__type" | "description"> &
+  Partial<WithDescription>;
 
-export type Primitive = "boolean" | "number" | "string" | "null";
+const factory = <T extends IRCommon<string>>(__type: T["__type"]) => (
+  opts: IRFactoryParam<T>
+): T =>
+  ({
+    ...opts,
+    description: opts?.description || "",
+    __type,
+  } as T);
 
-export const bool = () => "boolean";
-export const str = () => "string";
-export const nil = () => "null";
-export const num = () => "number";
+export type Any = IRCommon<"any">;
+export const any = factory<Any>("any");
 
-export type IRMap<K, V> = { keyType: K; valueType: V } & WithType<"map">;
+export type Bool = IRCommon<"boolean">;
+export const bool = factory<Bool>("boolean");
 
-export const map = <K = unknown, V = unknown>(
-  keyType: K,
-  valueType: V
-): IRMap<K, V> => ({
-  keyType,
-  valueType,
-  __type: "map",
-});
+export type Str = IRCommon<"string">;
+export const str = factory<Str>("string");
 
-export type Field = { type: Type } & WithDescription & WithType<"field">;
+export type Nil = IRCommon<"nil">;
+export const nil = factory<Nil>("nil");
 
-export const field = (fld: Pick<Field, "description" | "type">): Field => ({
-  __type: "field",
-  ...fld,
-});
+export type Num = IRCommon<"number">;
+export const num = factory<Num>("number");
 
-export type IRArray<V> = { valueType: V } & WithType<"array">;
+export type Primitive = Bool | Str | Nil | Num;
 
-export const arr = <V>(valueType: V): IRArray<V> => ({
-  valueType,
-  __type: "array",
-});
+export type IRMap = IRCommon<"map"> & { keyType: Type; valueType: Type };
+export const map = factory<IRMap>("map");
 
-export type Collection<K = unknown, V = unknown> = IRArray<V> | IRMap<K, V>;
+export type Field = { type: Type } & IRCommon<"field">;
+export const field = factory<Field>("field");
+
+export type IRArray = { valueType: Type } & IRCommon<"array">;
+export const arr = factory<IRArray>("array");
+
+export type Collection<K = unknown, V = unknown> = IRArray | IRMap;
 
 export type Union = {
   members: Type[];
-} & WithType<"union">;
-
-export const union = (...members: Type[]): Union => ({
-  __type: "union",
-  members,
-});
+} & IRCommon<"union">;
+export const union = factory<Union>("union");
 
 export type And = {
   members: Type[];
-} & WithType<"and">;
-
-export const and = (...members: Type[]): And => ({
-  __type: "and",
-  members,
-});
+} & IRCommon<"and">;
+export const and = factory<And>("and");
 
 export type Optional = {
   type: Type;
-} & WithType<"optional">;
-
-export const optional = (type: Type): Optional => ({
-  __type: "optional",
-  type,
-});
+} & IRCommon<"optional">;
+export const optional = factory<Optional>("optional");
 
 export type Literal<V = unknown> = {
   value: V;
-} & WithType<"literal">;
-
-export const literal = <V>(value: V): Literal<V> => ({
-  __type: "literal",
-  value,
-});
+} & IRCommon<"literal">;
+export const literal = factory<Literal>("literal");
 
 export type ObjectLiteral<V extends Record<string, Type> = {}> = {
   value: V;
-} & WithType<"object-literal"> &
-  Partial<WithDescription>;
+} & IRCommon<"object-literal">;
+export const objectLiteral = <T extends Record<string, Type> = {}>(
+  value: T
+) => {
+  /**
+   * object literal benefits from _not_ using the factory function so as to
+   * get type inference on the literal value passed
+   */
+  const fn = factory<ObjectLiteral<T>>("object-literal");
+  return (arg?: Omit<Parameters<typeof fn>[0], "value">) =>
+    fn({ ...arg, value });
+};
 
-export const objectLiteral = <V extends Record<string, Type>>(
-  value: V,
-  opts?: WithDescription
-): ObjectLiteral<V> => ({
-  ...opts,
-  value,
-  __type: "object-literal",
-});
+export const testIsTypeObjectLiteral = (t: Type): t is ObjectLiteral =>
+  typeof t === "object" && "__type" in t && t.__type === "object-literal";
 
 export type Sym = {
   text: string;
-} & WithType<"sym"> &
-  Partial<WithDescription>;
-
-export const sym = (text: string, opts?: Partial<WithDescription>): Sym => ({
-  ...opts,
-  text,
-  __type: "sym",
-});
+} & IRCommon<"sym">;
+export const sym = factory<Sym>("sym");
 
 export type Type =
-  | "any"
-  | Primitive
+  | Any
+  | And
+  | Collection
+  | Field
+  | Function
+  | Intf
   | Literal
   | ObjectLiteral
-  | Collection
-  | Sym
   | Optional
-  | Union
-  | And
-  | Field
-  | Function;
+  | Param
+  | Primitive
+  | Property
+  | Struct
+  | Sym
+  | Union;
 
 export type Param = {
   name: string;
   type: Type;
   isOptional?: boolean;
   isVariadic?: boolean;
-} & WithDescription &
-  WithType<"param">;
-
-export const param = (
-  par: Pick<
-    Param,
-    "name" | "type" | "isOptional" | "description" | "isVariadic"
-  >
-): Param => ({
-  __type: "param",
-  ...par,
-});
+} & IRCommon<"param">;
+export const param = factory<Param>("param");
 
 export type Function = {
   name: string;
   parameters: Param[];
   returnDescription?: string;
   return: Type;
-} & WithDescription &
-  WithType<"function">;
-
-export const fn = (
-  fun: Pick<
-    Function,
-    "name" | "parameters" | "return" | "description" | "returnDescription"
-  >
-): Function => ({
-  __type: "function",
-  ...fun,
-});
-
-export const testIsTypeFn = (t: Type): t is Function => {
-  if (typeof t === "object" && "__type" in t) {
-    return t.__type === "function";
-  }
-  return false;
-};
+} & IRCommon<"function">;
+export const fn = factory<Function>("function");
 
 export type Property = {
   name: string;
   type: Type;
   isReadonly?: boolean;
-} & WithDescription &
-  WithType<"property">;
-
-export const property = (
-  prop: Pick<Property, "name" | "type" | "isReadonly" | "description">
-): Property => ({
-  __type: "property",
-  ...prop,
-});
+} & IRCommon<"property">;
+export const property = factory<Property>("property");
 
 export type Struct = {
   name: string;
   members: ClassMember[];
-} & WithDescription &
-  WithType<"struct">;
+} & IRCommon<"struct">;
 
-export const struct = (
-  strukt: Pick<Struct, "description" | "members" | "name">
-): Struct => ({
-  ...strukt,
-  __type: "struct",
-});
+export const struct = factory<Struct>("struct");
+
+export type Intf = {
+  name: string;
+  membersByName: Record<string, Property>;
+  isRoot?: boolean;
+} & IRCommon<"interface">;
+export const intf = factory<Intf>("interface");
 
 export type ClassMember = Property | Function;
-
 export type Cls = {
   inherits?: Sym[];
 } & Omit<Struct, "__type"> &
-  WithDescription &
-  WithType<"class">;
+  IRCommon<"class">;
+export const cls = factory<Cls>("class");
 
-export const cls = (
-  clz: Parameters<typeof struct>[0] & Pick<Cls, "inherits">
-): Cls => ({
-  ...clz,
-  __type: "class",
-});
+export type TFactory<T> = (...args: any) => T;
+export const testIsType = <Factory extends TFactory<any>>(
+  v: any,
+  factory: Factory
+): v is ReturnType<typeof factory> => {
+  return (
+    v &&
+    typeof v === "object" &&
+    "__type" in v &&
+    v.__type === factory({} as any).__type
+  );
+};
 
 export * from "./of-lua";
+export * as printer from "./printer";
