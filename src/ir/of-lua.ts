@@ -4,10 +4,12 @@ import {
   any,
   arr,
   bool,
+  fn,
   map,
   nil,
   num,
   optional,
+  param,
   str,
   sym,
   Type,
@@ -75,6 +77,24 @@ export const ofLua = (ltype_: string): Type => {
   }
   if (unmodeled.includes(ltype)) {
     return any({});
+  }
+  /**
+   * @todo
+   * docs sometimes yield just the word `function` with no type details :/.
+   * sometimes it does have mediocre type details. let's improve it
+   */
+  if (ltype === "function" || ltype.match(/function\([^)]*\)/)) {
+    return fn({
+      name: "fn",
+      parameters: [
+        param({
+          name: "args",
+          isVariadic: true,
+          type: any({}),
+        }),
+      ],
+      return: any({}),
+    });
   }
   if (!definitionTypes.includes(ltype)) {
     definitionTypes.push(ltype.trim());

@@ -38,6 +38,7 @@ export const printInner = (t: Type): string => {
         .join(" ")} }`;
       if (!t.isRoot) return inner;
       return `interface ${t.name} \n${inner} `;
+    case "class":
     case "struct":
       return `interface ${t.name} { \n  ${t.members
         .map((member) => {
@@ -48,8 +49,9 @@ export const printInner = (t: Type): string => {
       return `${t.text}`;
     case "union":
       return `(${t.members.map(print).join(" | ")})`;
-    case "number":
     case "nil":
+      return "null";
+    case "number":
     case "string":
     case "boolean":
     case "any":

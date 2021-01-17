@@ -5,7 +5,6 @@ import { asMarkdown, asUrlCorrectedMarkdown } from "../batteries/markdown";
 import { PageMeta } from "../interfaces";
 import {
   any,
-  ClassMember,
   Cls,
   cls,
   field,
@@ -16,6 +15,7 @@ import {
   optional,
   param,
   Param,
+  Property,
   property,
   sym,
   Type,
@@ -86,7 +86,8 @@ export const getParamFromRow = (el: IElement): Param => {
     const [typeStr, description] = r1.split(":").map(trim);
     return param({
       description,
-      name,
+      // handle TS keyword edge case - keywords in typings are not permitted as key name
+      name: name === "function" ? "fn" : name,
       type: ofLua(typeStr),
     });
   } else {
@@ -113,8 +114,15 @@ export const parseParam = (el: IElement, i: number): Param => {
       nameAndOptional = "";
     }
     let [name] = nameAndOptional.split("(optional)").map(trim);
+    // case: "Table with the following fields: <desc>\n\n<ul>..."
+    if (name.startsWith("Table with")) {
+      name = "tbl";
+    }
     const isOptional = name !== nameAndOptional;
     const members = Array.from(fieldsUl.children).reduce((acc, el, j) => {
+      // @todo consider supporting `optional?` properties for "Additional entity-specific parameters" entries
+      // these entities do not have great narrowing properties, ready to be parsed from the HTML
+      if (el.textContent.startsWith("Additional")) return acc;
       const prm = parseParam(el, j);
       acc[prm.name] = field({ type: prm.type, description: prm.description });
       return acc;
@@ -129,7 +137,10 @@ export const parseParam = (el: IElement, i: number): Param => {
   return getParamFromRow(el);
 };
 
-export const parseImplEl = (implEl: IElement, description: string) => {
+export const parseMemberFnFromImplEl = (
+  implEl: IElement,
+  description: string
+) => {
   const id = implEl.id;
   if (!id) throw new Error("unable to find id");
   const name = id.split(".")[id.split(".").length - 1];
@@ -187,16 +198,22 @@ export const parseImplEl = (implEl: IElement, description: string) => {
   }
   const returnType = ofLua(returnTypeText.trim());
   const isReturnDescriptionPermittingNil = returnDescription.match("or nil");
-  return fn({
-    description,
+  return property({
     name,
-    parameters: params,
-    return: isReturningNil
-      ? nil({ description: "" })
-      : isReturnDescriptionPermittingNil
-      ? union({ members: [returnType, nil({ description: "" })], description })
-      : returnType,
-    returnDescription,
+    description,
+    type: fn({
+      name,
+      parameters: params,
+      return: isReturningNil
+        ? nil({ description: "" })
+        : isReturnDescriptionPermittingNil
+        ? union({
+            members: [returnType, nil({ description: "" })],
+            description,
+          })
+        : returnType,
+      returnDescription,
+    }),
   });
 };
 
@@ -213,19 +230,22 @@ const parseMemberFunction = (
   const implAnchor = query(el, "a", "missing impl anchor");
   // fast parse when there are no args
   if (el.textContent.includes("()")) {
-    return fn({
-      description,
+    return property({
       name: implAnchor.textContent,
-      parameters: [],
-      return: el.textContent.includes("→")
-        ? ofLua(
-            query(
-              el,
-              ".return-type",
-              "unable to find return type"
-            ).textContent.trim()
-          )
-        : nil({ description: "" }),
+      description,
+      type: fn({
+        name: implAnchor.textContent,
+        parameters: [],
+        return: el.textContent.includes("→")
+          ? ofLua(
+              query(
+                el,
+                ".return-type",
+                "unable to find return type"
+              ).textContent.trim()
+            )
+          : nil({ description: "" }),
+      }),
     });
   }
   // slow parse when no arg case fails
@@ -235,7 +255,7 @@ const parseMemberFunction = (
   if (!implEl) {
     throw new Error("missing impl el");
   }
-  return parseImplEl(implEl, description);
+  return parseMemberFnFromImplEl(implEl, description);
 };
 
 const parseMemberAttr = (
@@ -271,7 +291,7 @@ const parseMemberRow = (
   document: Document,
   row: IElement,
   pageMeta: PageMeta
-): ClassMember => {
+): Property => {
   const [signatureEl, descriptionEl] = row.children;
   if (!signatureEl) throw new Error("unable to find member signature el");
   const description = asUrlCorrectedMarkdown(
@@ -314,12 +334,8 @@ export const ofEl = (document: Document, el: IElement, pageMeta: PageMeta) => {
     it.classList.contains("brief-members")
   );
   if (!membersRootEl) throw new Error(`unable to find class member root el`);
-
-  const members = parseMemberRows(
-    document,
-    queryAll(membersRootEl, "tr"),
-    pageMeta
-  );
+  const memberRows = queryAll(membersRootEl, "tr");
+  const members = parseMemberRows(document, memberRows, pageMeta);
   return cls({
     name,
     description: getDescription(

@@ -1,10 +1,10 @@
 import Bluebird from "bluebird";
+import { promises as fs } from "fs";
+import { Cls, printer } from "./ir/ir";
 import { scrapeClassPage } from "./scrape/classes";
 import { scrapeConcepts } from "./scrape/concepts";
 import { scrapeDefines } from "./scrape/defines";
 import { ofUrl } from "./scrape/dom";
-import { printer } from "./ir/ir";
-import { promises as fs } from "fs";
 
 export const produce = async ({
   urls,
@@ -14,8 +14,21 @@ export const produce = async ({
   };
 }) => {
   const classLinks = await enumerateClassUrlsFromUrl(urls.apiRoot);
-  const classSchemas = await getClassesFromUrl(classLinks).then((pageSchemas) =>
-    pageSchemas.flat()
+  const nonDedupedclassSchemas = await getClassesFromUrl(
+    classLinks
+  ).then((pageSchemas) => pageSchemas.flat());
+  const classSchemas = Object.values(
+    nonDedupedclassSchemas.reduce((byName, curr) => {
+      if (byName[curr.name]) {
+        if (JSON.stringify(curr) !== JSON.stringify(byName[curr.name])) {
+          throw new Error(
+            `class ${curr.name} varies depending from where it is parsed! :|`
+          );
+        }
+      }
+      byName[curr.name] = curr;
+      return byName;
+    }, {} as Record<string, Cls>)
   );
   const [defines, concepts] = await Promise.all([
     getDefinesFromUrl(urls.apiRoot),
@@ -25,6 +38,7 @@ export const produce = async ({
     `/** @noSelfInFile */`,
     printer.print(defines),
     ...concepts.map(printer.print),
+    ...classSchemas.map(printer.print),
   ].join("\n");
   // const definitions = [
   //   ...classSchemas.map(({ schema, className }) => ({

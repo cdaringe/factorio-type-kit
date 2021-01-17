@@ -92,6 +92,7 @@ export type Type =
   | Any
   | And
   | Collection
+  | Cls
   | Field
   | Function
   | Intf
@@ -128,10 +129,12 @@ export type Property = {
 } & IRCommon<"property">;
 export const property = factory<Property>("property");
 
-export type Struct = {
+type StructLike = {
   name: string;
-  members: ClassMember[];
-} & IRCommon<"struct">;
+  members: Property[];
+};
+
+export type Struct = StructLike & IRCommon<"struct">;
 
 export const struct = factory<Struct>("struct");
 
@@ -142,10 +145,9 @@ export type Intf = {
 } & IRCommon<"interface">;
 export const intf = factory<Intf>("interface");
 
-export type ClassMember = Property | Function;
 export type Cls = {
   inherits?: Sym[];
-} & Omit<Struct, "__type"> &
+} & StructLike &
   IRCommon<"class">;
 export const cls = factory<Cls>("class");
 

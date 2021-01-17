@@ -23,10 +23,6 @@ export const scrapeConcept = (el: IElement) => {
     name,
     description,
     members: fields.map((field) => {
-      if (testIsType(field.type, fn)) {
-        // @todo - did we just throw away a bunch of info? do we actually expect this case?
-        return field.type;
-      }
       return property(field);
     }),
   });
