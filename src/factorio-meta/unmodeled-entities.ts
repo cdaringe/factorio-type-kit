@@ -1,6 +1,6 @@
 /**
- * models that are know to _not_ be scrapeable from any of the class/concept/event
- * html pages, but _do_ show up as referenced types in various signatures=--
+ * models that are know to _not_ have adequate type data from any of the class/concept/event
+ * html pages, but _do_ show up as referenced types in various signatures :/
  */
 export const unmodeled = [
   "blueprint entity",
@@ -32,4 +32,7 @@ export const unmodeled = [
   "UnitSpawnDefinition",
   "CircuitConnectionDefinition",
   "CraftingQueueItem",
+  "action",
+  /** https://lua-api.factorio.com/latest/LuaForce.html#LuaForce.research_all_technologies */
+  "include_disabled_prototypes",
 ];

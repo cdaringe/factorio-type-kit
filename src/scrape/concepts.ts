@@ -1,5 +1,5 @@
 import { IDocument, IElement } from "happy-dom";
-import { query } from "../batteries/dom/dom-extensions";
+import { query, siblings } from "../batteries/dom/dom-extensions";
 import { asMarkdown } from "../batteries/markdown";
 import {
   fn,
@@ -13,7 +13,7 @@ import {
   Type,
   union,
 } from "../ir/ir";
-import { parseParam } from "./classes";
+import { parseParam, tableMembersOfUl } from "./classes";
 
 /**
  *
@@ -23,6 +23,7 @@ import { parseParam } from "./classes";
  */
 export const parseSpecificationConceptOption = (el: IElement) => {
   const noAsA = el.textContent.replace(/As an? /, "");
+  let [name, ...rest] = noAsA.split("::").map((v) => v.trim());
   const [t, ...descriptionParts] = noAsA.split(":");
   const description = descriptionParts.join(":");
   const type = ofLua(t);
@@ -33,13 +34,18 @@ export const parseSpecificationConceptOption = (el: IElement) => {
 export const parseSpecificationConcept = ({
   name,
   description,
+  descriptionEl,
   el,
 }: {
   name: string;
   description: string;
+  descriptionEl?: IElement;
   el: IElement;
 }) => {
   let members: Type[] = [];
+  // const tableUl = siblings(descriptionEl).find((el) =>
+  //   el.classList.contains("field-list")
+  // );
   // edge-case - Position
   // position only has examples. damn it! but it's so ubiquitous we need to support it
   if (name === "Position") {
@@ -52,6 +58,14 @@ export const parseSpecificationConcept = ({
         },
       }),
     ];
+    // } else if (tableUl) {
+    //   // edge-case: https://lua-api.factorio.com/latest/Concepts.html#SimpleItemStack
+    //   members = [
+    //     intf({
+    //       name: "tbl",
+    //       membersByName: tableMembersOfUl(tableUl),
+    //     }),
+    //   ];
   } else {
     const ul = query(el, ".element-content ul", "failed to find content el");
     members = ul.children.map(parseSpecificationConceptOption);
@@ -80,12 +94,15 @@ export const scrapeConcept = (el: IElement) => {
   const fields = fieldListEl
     ? fieldListEl.children.filter((el) => el.textContent).map(parseParam)
     : [];
-  if (description.match(/may be specified/))
+  // if ()
+  if (!fieldListEl && description.match(/may be specified/)) {
     return parseSpecificationConcept({
       name,
       description,
       el,
+      descriptionEl,
     });
+  }
   return struct({
     name,
     description,

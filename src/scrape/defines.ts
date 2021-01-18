@@ -50,7 +50,7 @@ const guardObjectLiteral = (o: Type): o is ObjectLiteral => {
 
 export const ofDefines = (definesSyms: Sym[]) => {
   const root = intf({
-    name: "defines",
+    name: "Defines",
     isRoot: true,
     membersByName: {},
     description:

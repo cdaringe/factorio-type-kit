@@ -15,6 +15,7 @@ import {
   Type,
   union,
 } from "./ir";
+import * as printer from "./printer";
 
 const description = "";
 
@@ -72,8 +73,14 @@ export const ofLua = (ltype_: string): Type => {
     case "nil":
       return nil({ description });
   }
+
+  // factorio types
+  const [_, llv] = ltype.match(/LazyLoadedValue\s+\((.*)\)/) || [];
+  if (llv) {
+    return sym({ text: `LazyLoadedValue<${printer.print(ofLua(llv))}>` });
+  }
   if (ltype.match(/defines\..+/)) {
-    return sym({ text: ltype });
+    return sym({ text: `typeof ${ltype}` });
   }
   if (unmodeled.includes(ltype)) {
     return any({});

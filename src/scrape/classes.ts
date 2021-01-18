@@ -59,7 +59,7 @@ const getTableParamMeta = (elp: IElement) => {
   return { unparsedNameTypeText: el.textContent.trim(), fieldsUl };
 };
 
-export const getParamFromRow = (el: IElement): Param => {
+export const getParamFromRow = (el: IElement, i: number = 0): Param => {
   const txt = el.textContent.trim();
   // special case: factorio variadic splat
   if (txt.startsWith("..."))
@@ -82,12 +82,14 @@ export const getParamFromRow = (el: IElement): Param => {
         type: any({}),
       });
     }
-    const [name, r1] = txt.split("::").map(trim);
+    let [name, r1] = txt.split("::").map(trim);
+    // handle TS keyword edge cases - keywords in typings are not permitted as key name
+    if (name === "function") name = "fn";
+    else if (name === "interface") name = "intfc";
     const [typeStr, description] = r1.split(":").map(trim);
     return param({
       description,
-      // handle TS keyword edge case - keywords in typings are not permitted as key name
-      name: name === "function" ? "fn" : name,
+      name,
       type: ofLua(typeStr),
     });
   } else {
@@ -95,11 +97,21 @@ export const getParamFromRow = (el: IElement): Param => {
     const [typeStr, description] = txt.split(":").map(trim);
     return param({
       description: description || "",
-      name: `arg`,
+      name: `arg_${i}`,
       type: ofLua(typeStr),
     });
   }
 };
+
+export const tableMembersOfUl = (ul: IElement) =>
+  Array.from(ul.children).reduce((acc, el, j) => {
+    // @todo consider supporting `optional?` properties for "Additional entity-specific parameters" entries
+    // these entities do not have great narrowing properties, ready to be parsed from the HTML
+    if (el.textContent.startsWith("Additional")) return acc;
+    const prm = parseParam(el, j);
+    acc[prm.name] = field({ type: prm.type, description: prm.description });
+    return acc;
+  }, {} as Record<string, Type>);
 
 export const parseParam = (el: IElement, i: number): Param => {
   const tableEl = getFieldList(el);
@@ -119,14 +131,7 @@ export const parseParam = (el: IElement, i: number): Param => {
       name = "tbl";
     }
     const isOptional = name !== nameAndOptional;
-    const members = Array.from(fieldsUl.children).reduce((acc, el, j) => {
-      // @todo consider supporting `optional?` properties for "Additional entity-specific parameters" entries
-      // these entities do not have great narrowing properties, ready to be parsed from the HTML
-      if (el.textContent.startsWith("Additional")) return acc;
-      const prm = parseParam(el, j);
-      acc[prm.name] = field({ type: prm.type, description: prm.description });
-      return acc;
-    }, {} as Record<string, Type>);
+    const members = tableMembersOfUl(fieldsUl);
     return param({
       description,
       name: name || `table_${i}`,
@@ -134,7 +139,7 @@ export const parseParam = (el: IElement, i: number): Param => {
       isOptional,
     });
   }
-  return getParamFromRow(el);
+  return getParamFromRow(el, i);
 };
 
 export const parseMemberFnFromImplEl = (

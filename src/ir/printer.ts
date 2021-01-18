@@ -10,9 +10,8 @@ export const printInner = (t: Type): string => {
       // description should be accessed by object literal
       return print(t.type);
     case "function":
-      return `(${t.parameters.map((p) => print(p)).join(", ")}) => ${print(
-        t.return
-      )}`;
+      const paramStrs = t.parameters.map(print);
+      return `(${paramStrs.join(", ")}) => ${print(t.return)}`;
     case "literal":
       return `${t.value}`;
     case "map":
@@ -68,5 +67,5 @@ export const printInner = (t: Type): string => {
 
 export const print = (t: Type): string => {
   if (!t.description) return printInner(t);
-  return `/** ${t.description} */\n${printInner(t)}`;
+  return `\n/** ${t.description} */\n${printInner(t)}`;
 };
