@@ -2,7 +2,12 @@
 // @ts-ignore
 declare const log: (ls: LocalisedString) => void;
 
+// @ts-ignore
+declare const print: (v: any) => void;
+
 /** This function allows printing LocalisedStrings to stdout without polluting the logfile. This is primarily useful for communicating with external tools that launch Factorio as a child process. */
 declare const localised_print: typeof log;
 
 declare const table_size: <T extends {}>(v: T) => number;
+
+declare const pairs: <K, V, M extends Map<K, V>>(v: M) => [K, V][];

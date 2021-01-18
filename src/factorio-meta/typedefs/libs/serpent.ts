@@ -1,3 +1,4 @@
+/** noSelfInFile **/
 type SerpentOptions = {
   /** indentation; triggers long multi-line output. */
   indent: string;
@@ -49,11 +50,14 @@ type SerpentOptions = {
   /** name; triggers full serialization with self-ref section. */
   name: string;
 };
-declare const serpent: {
+declare const serpent: Serpent;
+
+/** @noSelf **/
+interface Serpent {
   /** full serialization; sets name, compact and sparse options; */
-  dump(tbl: any, options?: SerpentOptions): string;
+  dump(tbl: any, options?: Partial<SerpentOptions>): string;
   /** single line pretty printing, no self-ref section; sets sortkeys and comment options; */
-  line(tbl: any, options?: SerpentOptions): string;
+  line(tbl: any, options?: Partial<SerpentOptions>): string;
   /** multi-line indented pretty printing, no self-ref section; sets indent, sortkeys, and comment options. */
-  block(tbl: any, options?: SerpentOptions): string;
-};
+  block(tbl: any, options?: Partial<SerpentOptions>): string;
+}

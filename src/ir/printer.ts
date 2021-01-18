@@ -1,4 +1,4 @@
-import { Type } from "./ir";
+import { cls, optional, testIsType, Type } from "./ir";
 
 export const printInner = (t: Type): string => {
   switch (t.__type) {
@@ -26,6 +26,11 @@ export const printInner = (t: Type): string => {
       if (t.isVariadic) {
         return `...args: ${print(t.type)}[]`;
       }
+      let innerType = t.type;
+      if (testIsType(innerType, optional)) {
+        t.isOptional = true;
+        innerType.type;
+      }
       return `${t.name}${t.isOptional ? "?" : ""}: ${print(t.type)}`;
     case "property":
       return `${t.isReadonly ? "readonly " : ""}"${t.name}": ${print(t.type)}`;
@@ -35,11 +40,21 @@ export const printInner = (t: Type): string => {
           return `${print(prop)};\n`;
         })
         .join(" ")} }`;
-      if (!t.isRoot) return inner;
-      return `interface ${t.name} \n${inner} `;
+      if (!t.isRoot) return `/** @noSelf **/\n${inner}`;
+      return `/** @noSelf **/\ninterface ${t.name} \n${inner} `;
     case "class":
     case "struct":
-      return `interface ${t.name} { \n  ${t.members
+      let inhertsStr = "";
+      if (testIsType(t, cls)) {
+        if (t.inherits?.length) {
+          inhertsStr = ` extends ${t.inherits
+            .map((sym) => sym.text)
+            .join(", ")} `;
+        }
+      }
+      return `/** @noSelf **/\ninterface ${
+        t.name
+      } ${inhertsStr} { \n  ${t.members
         .map((member) => {
           return `${print(member)};\n`;
         })
