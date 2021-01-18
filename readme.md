@@ -16,11 +16,3 @@
   - haxe?
 
 ## Usage
-
-## ToDo
-
-- [ ] improve `defines` symbol typings in JSON schema
-- [ ] fix all methods returning null :grimmace:
-- [ ] reduce unknowns
-- [ ] parse _more_ stuff
-- [ ] expose some stuff globally, or at least provide a recipe for folks to do so

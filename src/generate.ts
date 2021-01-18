@@ -8,6 +8,7 @@ import { ofUrl } from "./scrape/dom";
 import { resolve } from "path";
 import { IDocument } from "happy-dom";
 import { scrapeEvents } from "./scrape/events";
+import { skipClasses } from "./factorio-meta/entities";
 
 export const produce = async ({
   urls,
@@ -16,10 +17,7 @@ export const produce = async ({
     apiRoot: string;
   };
 }) => {
-  const [rootDocument, eventsDocument] = await Promise.all([
-    ofUrl(urls.apiRoot),
-    ofUrl(`${urls.apiRoot}/events.html`),
-  ]);
+  const [rootDocument] = await Promise.all([ofUrl(urls.apiRoot)]);
   const classLinks = await enumerateClassUrlsFromUrl(
     rootDocument,
     urls.apiRoot
@@ -29,6 +27,7 @@ export const produce = async ({
   ).then((pageSchemas) => pageSchemas.flat());
   const classSchemas = Object.values(
     nonDedupedClassSchemas.reduce((byName, curr) => {
+      if (skipClasses.some((skip) => skip === curr.name)) return byName;
       if (byName[curr.name]) {
         if (JSON.stringify(curr) !== JSON.stringify(byName[curr.name])) {
           throw new Error(
@@ -43,7 +42,7 @@ export const produce = async ({
   const [defines, concepts, events] = await Promise.all([
     getDefinesFromUrl(urls.apiRoot),
     getConceptsFromUrl(urls.apiRoot),
-    scrapeEvents(eventsDocument.body),
+    getEventsFromUrl(urls.apiRoot),
   ]);
 
   const printed = [
@@ -123,9 +122,14 @@ export const produce = async ({
     // @todo add global libs https://lua-api.factorio.com/latest/Libraries.html
     `/** libs */`,
     ...(await Promise.all([
-      fs.readFile(resolve(__dirname, "factorio-meta/libs/serpent.ts")),
-      fs.readFile(resolve(__dirname, "factorio-meta/libs/factorio-new-fns.ts")),
-      fs.readFile(resolve(__dirname, "factorio-meta/LazyLoadedValue.ts")),
+      fs.readFile(resolve(__dirname, "factorio-meta/typedefs/libs/serpent.ts")),
+      fs.readFile(
+        resolve(__dirname, "factorio-meta/typedefs/libs/factorio-new-fns.ts")
+      ),
+      fs.readFile(
+        resolve(__dirname, "factorio-meta/typedefs/LazyLoadedValue.ts")
+      ),
+      fs.readFile(resolve(__dirname, "factorio-meta/typedefs/Waypoint.ts")),
     ])),
 
     // hacks
@@ -149,6 +153,12 @@ const getConceptsFromUrl = async (urlRoot: string) => {
   const pageBasename = "Concepts.html";
   const url = `${urlRoot}/${pageBasename}`;
   return scrapeConcepts(await ofUrl(url));
+};
+
+const getEventsFromUrl = async (urlRoot: string) => {
+  const url = `${urlRoot}/events.html`;
+  const document = await ofUrl(url);
+  return scrapeEvents(document.body, url);
 };
 
 const getClassesFromUrl = async (classLinks: { href: string }[]) =>

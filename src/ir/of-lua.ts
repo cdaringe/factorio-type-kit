@@ -1,5 +1,5 @@
 import { definitionTypes } from "../factorio-meta/factorio-lua-json-schema";
-import { unmodeled } from "../factorio-meta/unmodeled-entities";
+import { unmodeled } from "../factorio-meta/entities";
 import {
   any,
   arr,

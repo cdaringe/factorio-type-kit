@@ -36,3 +36,5 @@ export const unmodeled = [
   /** https://lua-api.factorio.com/latest/LuaForce.html#LuaForce.research_all_technologies */
   "include_disabled_prototypes",
 ];
+
+export const skipClasses = ["LuaLazyLoadedValue"];

@@ -45,7 +45,15 @@ const parseEventHtml = (el: IElement): TypeDecl => {
   });
 };
 
-export const scrapeEvents = (el: IElement) => {
+export const scrapeEvents = (el: IElement, url: string) => {
   const evtPayloadEls = el.querySelectorAll(`[id*=on_]`);
-  return evtPayloadEls.map(parseEventHtml);
+  return evtPayloadEls.map(parseEventHtml).map((x, i) => {
+    const id = evtPayloadEls[i].id;
+    const d = x.description;
+    x.jsDocDescription = `/**\n * ${
+      x.description ? `${x.description}\n * ` : ""
+    }{@link ${url}#${id} ${id}}\n */`;
+    x.description = "";
+    return x;
+  });
 };

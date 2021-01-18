@@ -1,6 +1,5 @@
 // https://lua-api.factorio.com/latest/LuaLazyLoadedValue.html
-
-export type LuaLazyLoadedValue<T> = {
+type LuaLazyLoadedValue<T> = {
   /** Is this object valid? */
   readonly valid: boolean;
   /** The class name of this object. */
@@ -10,3 +9,8 @@ export type LuaLazyLoadedValue<T> = {
   /** All methods, and properties that this object supports. */
   help: () => string;
 };
+
+/**
+ * Some factorio typedefs ref LLV w/out Lua prefix :|
+ */
+type LazyLoadedValue<T> = LuaLazyLoadedValue<T>;

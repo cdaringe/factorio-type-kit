@@ -1,6 +1,6 @@
 import type { JSONSchema6 } from "json-schema";
 import { bigBadHacks } from "../hack";
-import { unmodeled } from "./unmodeled-entities";
+import { unmodeled } from "./entities";
 
 export const definitionTypes: string[] = [];
 

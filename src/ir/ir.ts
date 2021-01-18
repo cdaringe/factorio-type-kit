@@ -2,7 +2,10 @@
  * intermediate representation
  */
 
-export type WithDescription = { description: string };
+export type WithDescription = {
+  description: string;
+  jsDocDescription?: string;
+};
 export type WithType<T extends string> = { __type: T };
 export type IRCommon<T extends string> = WithType<T> & WithDescription;
 export type IRFactoryParam<T> = Omit<T, "__type" | "description"> &
