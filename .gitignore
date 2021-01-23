@@ -8,3 +8,4 @@ debug.d.ts
 .factorio-ts-cache
 factorio.schema.json
 **/*.js
+!release.config.js
