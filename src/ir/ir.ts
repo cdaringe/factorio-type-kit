@@ -175,4 +175,3 @@ export const testIsType = <Factory extends TFactory<any>>(
 };
 
 export * from "./of-lua";
-export * as printer from "./printer";

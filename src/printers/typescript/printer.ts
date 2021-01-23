@@ -1,6 +1,6 @@
-import { cls, optional, testIsType, Type } from "./ir";
+import { cls, optional, testIsType, Type } from "../../ir/ir";
 
-export const printInner = (t: Type): string => {
+const printInner = (t: Type): string => {
   switch (t.__type) {
     case "and":
       return t.members.map((tp) => print(tp)).join(" & ");

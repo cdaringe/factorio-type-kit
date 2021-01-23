@@ -1,4 +1,3 @@
-import { definitionTypes } from "../factorio-meta/factorio-lua-json-schema";
 import { unmodeled } from "../factorio-meta/entities";
 import {
   any,
@@ -15,9 +14,11 @@ import {
   Type,
   union,
 } from "./ir";
-import * as printer from "./printer";
+import * as printer from "../printers/typescript/printer";
 
 const description = "";
+
+export const definitionTypes: string[] = [];
 
 export const ofLua = (ltype_: string): Type => {
   const ltype = ltype_.trim().replace("&rarr;", "→");
