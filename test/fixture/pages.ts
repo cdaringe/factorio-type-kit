@@ -11,7 +11,7 @@ export const getFixture = async (pageBasename: string) => {
   };
   return {
     document: await ofUrl(
-      `/fake/${pageBasename}` /* prefix fake to force use of fs cache, not network */
+      `${pageMeta.baseUrl}/fake/${pageBasename}` /* prefix fake to force use of fs cache, not network */
     ),
     pageMeta,
   };
