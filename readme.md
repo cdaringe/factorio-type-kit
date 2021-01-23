@@ -1,5 +1,6 @@
 # factorio-type-kit
 
+![main](https://github.com/cdaringe/factorio-type-kit/workflows/main/badge.svg)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 Generate type definitions for the [Factorio Lua API](https://lua-api.factorio.com/latest/).
@@ -8,12 +9,14 @@ Currently supports typescript and a JSON [IR](<https://en.wikipedia.org/wiki/Int
 
 ## Usage
 
-`factorio-type-kit` can be used in various ways, depending on your use case.
+`factorio-type-kit` is generally used to write mods. It can also be used to generate code based on the Factorio API.
 
-- **write mods**
+- **Writing a factorio mod in TypeScript?**
+
   - `npm install factorio-type-kit` or `yarn add factorio-type-kit`
   - [see the guide for writing statically typed factorio mods](./docs/typescript-guide.md)
-- **generate API definitions**
+
+- **Generate API definitions**
   - as a library?
     - install via the npm/yarn steps above. you can now `import * from "factorio-type-kit"` directly into your JS or TS application
     - the API exports a few functions, namely `produce` & `printTs`, etc. Please see `src/bin.ts` to see them in self-documenting action :)
