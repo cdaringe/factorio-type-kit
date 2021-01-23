@@ -33,20 +33,20 @@ jobs:
       #     publish_dir: ./public
 
       # release
-      # - name: setup-node
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: 12
-      # - name: Release
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     npm init -y \
-      #       && \
-      #     npm install -D \
-      #       "@semantic-release/commit-analyzer" \
-      #       "@semantic-release/release-notes-generator" \
-      #       "@semantic-release/github" \
-      #       "@semantic-release/exec" \
-      #       && \
-      #     npx semantic-release
+      - name: setup-node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm init -y \
+            && \
+          npm install -D \
+            "@semantic-release/commit-analyzer" \
+            "@semantic-release/release-notes-generator" \
+            "@semantic-release/github" \
+            "@semantic-release/exec" \
+            && \
+          npx semantic-release
