@@ -12,7 +12,9 @@ const runAndFormat: Task = {
   },
 };
 
-const clean: Task = 'npx del "{src,test}/**/*.js" "./*.js"';
+const clean: Task =
+  'npx del "{src,test}/**/*.js" "./*.js" && rm -rf .factorio-ts-cache';
+
 export const tasks: Tasks = {
   ...{ clean, c: clean },
   ...{ format, f: format },

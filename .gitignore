@@ -7,3 +7,4 @@ debug.d.ts
 **/.factorio-ts-cache
 .factorio-ts-cache
 factorio.schema.json
+**/*.js

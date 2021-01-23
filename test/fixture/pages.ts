@@ -6,12 +6,12 @@ export const getFixture = async (pageBasename: string) => {
     throw new Error(`pageBasename must end in .html`);
   }
   const pageMeta: PageMeta = {
-    baseUrl: `http://testing`,
+    baseUrl: `https://lua-api.factorio.com/latest`,
     pageBasename,
   };
   return {
     document: await ofUrl(
-      `${pageMeta.baseUrl}/fake/${pageBasename}` /* prefix fake to force use of fs cache, not network */
+      `${pageMeta.baseUrl}/${pageBasename}` /* prefix fake to force use of fs cache, not network */
     ),
     pageMeta,
   };
