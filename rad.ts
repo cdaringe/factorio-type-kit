@@ -12,7 +12,7 @@ const runAndFormat: Task = {
   },
 };
 
-const clean: Task = 'npx del "src/**/*.js" "./*.js"';
+const clean: Task = 'npx del "{src,test}/**/*.js" "./*.js"';
 export const tasks: Tasks = {
   ...{ clean, c: clean },
   ...{ format, f: format },

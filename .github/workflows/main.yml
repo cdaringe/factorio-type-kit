@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 15.0.1
       - name: install
-        run: yarn
+        run: yarn && deno install --unstable -f -A -n rad https://raw.githubusercontent.com/cdaringe/rad/main/src/bin.ts
       - name: test
         run: ./rad test
       # - name: deploy
