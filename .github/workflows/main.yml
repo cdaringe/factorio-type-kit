@@ -28,6 +28,8 @@ jobs:
         run: rad test
       - name: build-ts-artifacts
         run: rad runAndFormat
+      - name: compile
+        run: npx tsc
       # - name: deploy
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:

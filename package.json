@@ -7,7 +7,7 @@
   "license": "MIT",
   "files": [
     "src",
-    "./*.d.ts"
+    "factorio.d.ts"
   ],
   "dependencies": {
     "bluebird": "^3.7.2",
