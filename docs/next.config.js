@@ -1,3 +1,4 @@
 module.exports = {
-  basePath: '/factorio-type-kit'
+  basePath: '/factorio-type-kit',
+  assetPrefix: '/factorio-type-kit/',
 }
