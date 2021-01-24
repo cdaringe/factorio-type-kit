@@ -1,13 +1,13 @@
 ---
 title: Get started modding in TypeScript
 excerpt: Factorio mods use Lua, but Lua is dynamically typed. Fear not--static typing is here for factorio.
-coverImage: "/assets/blog/dynamic-routing/cover.jpg"
+coverImage: "/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"
 date: "2021-01-24T05:35:07.322Z"
 author:
   name: cdaringe
-  picture: "/assets/blog/authors/cdaringe.jpeg"
+  picture: "/factorio-type-kit/assets/blog/authors/cdaringe.jpeg"
 ogImage:
-  url: "/assets/blog/dynamic-routing/cover.jpg"
+  url: "/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"
 ---
 
 Type safety is in. In fact, it always has been! While typescript doesn't offer
