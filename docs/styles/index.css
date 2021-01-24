@@ -1,0 +1,21 @@
+@tailwind base;
+
+/* Write your own custom base styles here */
+ol,
+ul {
+  list-style: revert;
+  padding: revert;
+  margin: revert;
+}
+
+/* Start purging... */
+@tailwind components;
+/* Stop purging. */
+
+/* Write you own custom component styles here */
+
+/* Start purging... */
+@tailwind utilities;
+/* Stop purging. */
+
+/* Your own custom utilities */

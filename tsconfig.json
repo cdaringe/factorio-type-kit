@@ -7,5 +7,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": ["src/factorio-meta/typedefs/"]
+  "exclude": ["src/factorio-meta/typedefs/", "docs"]
 }

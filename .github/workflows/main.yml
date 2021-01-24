@@ -26,6 +26,8 @@ jobs:
         run: yarn && deno install --unstable -f -A -n rad https://raw.githubusercontent.com/cdaringe/rad/main/src/bin.ts
       - name: test
         run: rad test
+      - name: build-ts-artifacts
+        run: rad runAndFormat
       # - name: deploy
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:

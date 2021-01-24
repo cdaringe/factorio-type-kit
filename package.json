@@ -6,7 +6,8 @@
   "author": "cdaringe <cdaringe@gmail.com>",
   "license": "MIT",
   "files": [
-    "src/**/*.js"
+    "src",
+    "./*.d.ts"
   ],
   "dependencies": {
     "bluebird": "^3.7.2",

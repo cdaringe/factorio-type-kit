@@ -26,7 +26,7 @@ async function go() {
       --output, -o  path/to/filename/outupt.[ts|json]
 
     Examples
-      $ factorio-type-kit -l ts -o factorio.schema.d.ts
+      $ factorio-type-kit -l ts -o factorio.d.ts
   `,
     {
       flags: {

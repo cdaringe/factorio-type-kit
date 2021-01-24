@@ -3,7 +3,7 @@ node_modules
 .DS_Store
 cached
 debug.d.ts
-**/factorio.schema.d.ts
+**/factorio.d.ts
 **/.factorio-ts-cache
 .factorio-ts-cache
 factorio.schema.json
