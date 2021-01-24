@@ -29,7 +29,7 @@ jobs:
       - name: build-ts-artifacts
         run: rad runAndFormat
       - name: compile
-        run: npx tsc
+        run: npx tsc -p tsconfig.prod.json
       # - name: deploy
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:

@@ -6,8 +6,8 @@
   "author": "cdaringe <cdaringe@gmail.com>",
   "license": "MIT",
   "files": [
-    "src",
-    "factorio.d.ts"
+    "factorio.d.ts",
+    "src"
   ],
   "dependencies": {
     "bluebird": "^3.7.2",
