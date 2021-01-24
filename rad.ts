@@ -5,8 +5,7 @@ const format: Task = `npx prettier --write .`;
 const test: Task = `npx ava --coverage`;
 const run: Task = `node -r ts-node/register/transpile-only src/bin.ts -l ts -o factorio.d.ts`;
 
-const clean: Task =
-  'npx del "{src,test}/**/*.js" "./*.js" && rm -rf .factorio-ts-cache';
+const clean: Task = 'npx del "{src,test}/**/*.js" && rm -rf .factorio-ts-cache';
 
 const runAndFormat: Task = {
   dependsOn: [clean],
