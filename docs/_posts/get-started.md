@@ -1,5 +1,5 @@
 ---
-title: Get started Factorio modding in TypeScript
+title: Get started modding Factorio in TypeScript
 excerpt: Factorio mods use Lua, but Lua is dynamically typed. Fear not--static typing is here for factorio.
 # coverImage: "/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"
 date: "2021-01-24T05:35:07.322Z"
