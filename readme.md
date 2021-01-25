@@ -7,6 +7,8 @@ Generate type definitions for the [Factorio Lua API](https://lua-api.factorio.co
 
 Currently supports typescript and a JSON [IR](<https://en.wikipedia.org/wiki/Intermediate_representation#:~:text=An%20intermediate%20representation%20(IR)%20is,such%20as%20optimization%20and%20translation.>).
 
+Docs @ https://cdaringe.github.io/factorio-type-kit
+
 ## Usage
 
 `factorio-type-kit` is generally used to write mods. It can also be used to generate code based on the Factorio API.
