@@ -12,6 +12,10 @@ a {
   color: revert;
 }
 
+pre {
+  overflow: auto;
+}
+
 pre, code {
   border-radius: 4px;
 }

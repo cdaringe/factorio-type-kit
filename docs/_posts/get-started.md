@@ -136,7 +136,7 @@ script.on_event(
 ```
 
 `onPositionChange` is not defined yet. Let's discuss what it needs to do then draft it.
-First, it needs to get the player's current speed. Next, the speed needs to increase the speed when running. Because the purpose of the mod is to accelerate the user, we must multiply the previous speed by a scalar every so often.
+First, it needs to get the player's current speed. Next, the speed needs to increase when running. Because the purpose of the mod is to accelerate the user, we multiply the previous speed by a scalar every so often.
 
 ```typescript
 const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
