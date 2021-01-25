@@ -9,6 +9,20 @@ import { getPostBySlug, getAllPosts } from "../../lib/api";
 import PostTitle from "../../components/post-title";
 import Head from "next/head";
 import markdownToHtml from "../../lib/markdownToHtml";
+// import { render as renderMdx  } from "../../lib/mdx";
+// import SyntaxHighlighter from "react-syntax-highlighter";
+// import monokai from 'react-syntax-highlighter/dist/cjs/styles/hljs/monokai.js';
+
+// const theme = monokai;
+
+// const Highlight = props => <SyntaxHighlighter style={theme} customStyle={{borderRadius: 4}} {...props} />;
+// const Shell = props => <Highlight {...props} language="shell" />
+// const TS = props => <Highlight {...props} language="typescript" />
+
+// const mdxComponents = {
+//   Shell,
+//   TS
+// }
 
 export default function Post({ post, morePosts, preview }) {
   const router = useRouter();
@@ -26,7 +40,7 @@ export default function Post({ post, morePosts, preview }) {
             <article className="mb-32">
               <Head>
                 <title>{post.title} | factorio-type-kit</title>
-                <meta property="og:image" content={post.ogImage.url} />
+                {post?.ogImage?.url && <meta property="og:image" content={post.ogImage.url} />}
               </Head>
               <PostHeader
                 title={post.title}
@@ -55,6 +69,7 @@ export async function getStaticProps({ params }) {
   ]);
   const content = await markdownToHtml(post.content || "");
 
+  // const content = await renderMdx(post.content, mdxComponents)
   return {
     props: {
       post: {
@@ -78,4 +93,8 @@ export async function getStaticPaths() {
     }),
     fallback: false,
   };
+}
+
+export const config = {
+  unstable_runtimeJS: false
 }

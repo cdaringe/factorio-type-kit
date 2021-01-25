@@ -8,6 +8,14 @@ ul {
   margin: revert;
 }
 
+a {
+  color: revert;
+}
+
+pre, code {
+  border-radius: 4px;
+}
+
 /* Start purging... */
 @tailwind components;
 /* Stop purging. */

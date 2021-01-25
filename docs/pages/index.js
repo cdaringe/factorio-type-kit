@@ -51,3 +51,7 @@ export async function getStaticProps() {
     props: { allPosts },
   };
 }
+
+export const config = {
+  unstable_runtimeJS: false
+}

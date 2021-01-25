@@ -15,10 +15,25 @@ const printInner = (t: Type): string => {
     case "literal":
       return `${t.value}`;
     case "map":
-      return `Map<${print(t.keyType)}, ${print(t.valueType)}>`;
+      let key = print(t.keyType);
+      const [_, defMatch] = key.match(/typeof (defines.*)/) || [];
+      if (defMatch) {
+        key = `(typeof ${defMatch})[keyof (${key})]`;
+      }
+      return `Record<${key}, ${print(t.valueType)}>`;
     case "object-literal":
       return `{ ${Object.entries(t.value)
-        .map(([key, tp]) => `"${key}": ${print(tp as Type)},`)
+        .map(([key, tp_]) => {
+          const tp = tp_ as Type;
+          let isOptional = false;
+          let typeToPrint = tp;
+          if ("type" in tp && testIsType(tp.type, optional)) {
+            typeToPrint = tp.type.type;
+            isOptional = true;
+          }
+          if (key.match(/surface/)) debugger;
+          return `"${key}"${isOptional ? "?" : ""}: ${print(typeToPrint)},`;
+        })
         .join(" ")} }`;
     case "optional":
       return `(null | ${print(t.type)})`;

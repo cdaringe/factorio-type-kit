@@ -22,7 +22,7 @@
         "ts-node/register/transpile-only",
         "--max-old-space-size=8000"
       ],
-      "args": ["${workspaceRoot}/src/bin.ts"],
+      "args": ["${workspaceRoot}/src/bin.ts", "-l", "ts"],
       "cwd": "${workspaceRoot}",
       "skipFiles": [],
       "console": "integratedTerminal"
