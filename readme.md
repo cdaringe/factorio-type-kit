@@ -16,7 +16,7 @@ Docs @ https://cdaringe.github.io/factorio-type-kit
 - **Writing a factorio mod in TypeScript?**
 
   - `npm install factorio-type-kit` or `yarn add factorio-type-kit`
-  - [see the guide for writing statically typed factorio mods](./docs/typescript-guide.md)
+  - [see the guide for writing statically typed factorio mods](https://cdaringe.github.io/factorio-type-kit/posts/get-started)
 
 - **Generate API definitions**
   - as a library?
