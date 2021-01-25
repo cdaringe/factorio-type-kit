@@ -96,5 +96,6 @@ export async function getStaticPaths() {
 }
 
 export const config = {
-  unstable_runtimeJS: false
+  // @todo restore no runtime js without destroying mobile viewports
+  // unstable_runtimeJS: false
 }
