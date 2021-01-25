@@ -99,7 +99,7 @@ script.on_event(defines.events.on_tick, onTick);
 
 Boom! Types for everything!
 
-...but not quite. The Factorio Lua documentation is _lossy_, and has many cases where we simply _cannot_ parse correct type definitions from their HTML. Until the factorio development team publicly supports  machine-readable API documentation, `factorio-type-kit` TypeScript provisions will generally only be 80-90%+ complete. Thus, TypeScript users will be periodically disappointed to find `any` or `unknown` types in various interfaces. With that said, `factorio-type-kit` users are welcome to manually backfill essential definitions to make our community's development kit better.
+...but not quite. The Factorio Lua documentation is _lossy_, and has many cases where we simply _cannot_ parse correct type definitions from the Factorio website. Until the factorio development team publicly supports  machine-readable API documentation, `factorio-type-kit` TypeScript provisions will generally only be 70-80%+ complete. Thus, TypeScript users will be periodically disappointed to find `any` or `unknown` types in various interfaces. With that said, `factorio-type-kit` users are welcome to manually backfill essential definitions to make our community's development kit better.
 
 ## Starting the mod compiler
 
@@ -125,8 +125,8 @@ The TypeScriptToLua compiler does a fanstastic job on producing readable Lua.
 
 The very first thing the `vroom` mod needs to do is detect when the player is in motion.
 
-Rather that pull up the documentation, I'll just open up another call `script.on_event`,
-begin typing in `defines.events.`, let intellisense present me options, and discover `on_player_changed_position`.
+Rather that pull up the documentation, I'll just open up another call `script.on_event`, then
+begin typing in `defines.events.`. After intellisense presents me options, I will select `on_player_changed_position`. The type definitions tell me a callback is also required. I will enter in `onPositionChanged`.
 
 ```typescript
 script.on_event(
@@ -135,8 +135,8 @@ script.on_event(
 );
 ```
 
-`onPositionChange` is not defined yet. Let's discuss about what it needs to do then draft it.
-First, it needs to get the player's current speed. Next, the speed needs to increase it when running. Because the purpose of the mod is to accelerate the user, we must multiply the previous speed by a scalar every so often.
+`onPositionChange` is not defined yet. Let's discuss what it needs to do then draft it.
+First, it needs to get the player's current speed. Next, the speed needs to increase the speed when running. Because the purpose of the mod is to accelerate the user, we must multiply the previous speed by a scalar every so often.
 
 ```typescript
 const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
@@ -147,12 +147,12 @@ const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
 };
 ```
 
-Immediately take note that we have manually specified the type of `evt` as `OnPlayerChangedPositionPayload`. All factorio script events follow the event naming convention: `<CamelCased-EventName>Payload`. A future version may auto apply types to the `on_event` callback, so you not need cast. Moving on.
+Immediately take note that we have manually specified the type of `evt` as `OnPlayerChangedPositionPayload`. All factorio script event types follow the event naming convention: `<CamelCased-EventName>Payload`. A future version may automatically apply types to the `on_event` callback, so you not need cast.
 
-The first thing I noticed was that `evt` didn't seem to have a reference directly to the player I needed.
-Bummer. No worries, it had the ID! With the ID, I then _guessed_ to inspect the global `game` class for assistance. `game` has a `get_player` method. `get_player` returns an instance of a `LuaPlayer`, which is a class instance with many methods and properties. We know that we _only_ want to speed up the player if he is in motion, so let's wrap our logic inside a conditional--`if (player.walking_state.walking) { ... }`.
+The first thing I noticed was that `evt` did not have a reference directly to the player I needed.
+It does contain the `player_id` however, and with that ID we can call the `get_player` method on the global `game` instance. `get_player` returns an instance of a `LuaPlayer`, which is a class instance with many methods and properties. We know that we _only_ want to speed up the player if he is in motion, so let's wrap our logic inside a conditional--`if (player.walking_state.walking) { ... }`.
 
-After hunting and pecking around the API and the documentation, I concluded that there was not a direct value specifying a velocity of the character. However, I did come across `character_running_speed_modifier`, which our type definitions told me is of type `number`. Unexpectedly, through trial and error (typescript _did not help me here_), I learned that `character_running_speed_modifier` could be _0_! Of course `number`s can be zero, so defensive programmers everywhere are saying silently "you should have seen this coming", and they would be correct :). Equipped with this knowledge, let's fill in the rest.
+After searching the API documentation, I concluded that there was not a direct value specifying a velocity of the character. However, I did come across `character_running_speed_modifier`, which the type definitions told me is of type `number`. Unexpectedly though, through trial and error, I learned that `character_running_speed_modifier` could be zero. Typescript did not help me here! Of course `number`s can be zero--defensive programmers everywhere are saying "you should have seen this coming", and they would be correct :). Equipped with this knowledge, let's fill in the rest.
 
 ```typescript
 const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
@@ -165,8 +165,8 @@ const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
 };
 ```
 
-When our player stops running, we want to have to restart the acceleration process next time he runs.
-My original approach was to listen for `keyup` events. Alas, Factorio has no key events. How else could I determine if the player has stopped running, and thus safely reset the speed modifier? Easy! On every tick of the game, I can check all players for motion--and turn of the multiplier if they are stopped!
+When our player stops running, we want to restart the acceleration process for the next time he runs.
+My original approach was to listen for `keyup` events. Alas, Factorio has no key events. How else could I determine if the player has stopped running, and thus safely reset the speed modifier? Easy! On every tick of the game, I can check all players for motion--and turn off the multiplier if they are stopped!
 
 ```typescript
 const onTick = (_evt: OnTickPayload) => {
@@ -183,7 +183,7 @@ const onTick = (_evt: OnTickPayload) => {
 
 That is, for every player, if there is a positive speed modifier and and the player is not walking, zero out the modifier.
 
-Why didn't we just do a `game.players.forEach`? `game.players` isn't an array, so that won't work. TypeScript protected us from making that mistake! What about `Object.entries(game.players).forEach`? Yep, that worked! Why did we do `Object.values(...)`? Because `game.tables` is a special dictionary in Lua. Not all iterables map cleanly between languages. `Object.values(...)` wouldn't have given us compiler error, but still would have failed. Improved typing is needed to protect against these failures. While TypeScriptToLua generally helps out a great deal protect us from writing erroneous code, it is only as good as its applied type constraints.
+Why didn't we just do a `game.players.forEach`? `game.players` isn't an array, so that won't work. TypeScript protected us from making that mistake! What about `Object.entries(game.players).forEach`? Yep, that worked! Why did we not do `Object.values(...)`? Because `game.players` is a [special dictionary](https://lua-api.factorio.com/latest/LuaGameScript.html#LuaGameScript.players) in Lua. Not all iterables map cleanly between languages. `Object.values(...)` wouldn't have given us compiler error, but still would have failed. Improved typing is needed to protect against these failures. While TypeScriptToLua generally helps out a great deal protect us from writing erroneous code, it is only as good as its applied type constraints.
 
 When using JS standard library provisions, as we did above, the compiler will add a typescript-lua polyfill, `lualib_bundle`. The emitted Lua perhaps is not as elegant:
 
@@ -210,7 +210,7 @@ Even with the extra boilerplate generated, the code is still quite readable. Cou
 ## Deploy it
 
 I do not yet have clean, polished package & deploy scripts, but I do have functional ones.
-Do your best to cover your eyes. Running `yarn install_mod` syncs the mod into my local Factorio installation. Coupled with a watch script, every code change immediately lands in the game folder, and requires only a scenario reload to get changes applied.
+Do your best to cover your eyes. Running `yarn install_mod` syncs the mod into the local Factorio installation. Coupled with a watch script, every code change immediately syncs in the game folder, and requires only a scenario reload to exercise the new scripts.
 
 ```json
 "scripts": {
@@ -221,8 +221,10 @@ Do your best to cover your eyes. Running `yarn install_mod` syncs the mod into m
 }
 ```
 
-Feel free to open an issue and collab on tidying the above in [create-factorio-mod](https://github.com/cdaringe/create-factorio-mod/).
+Feel free to open an issue and collab on tidying the above in [create-factorio-mod](https://github.com/cdaringe/create-factorio-mod/). With very little work, surely some cross-platform tooling could make the bundling and syncing nice for community, even for those not using `factorio-type-kit`.
 
 ## Enjoy it
+
+The most important part of modding. Have fun playing:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/5cfHPHv6jS0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

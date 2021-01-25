@@ -16,6 +16,10 @@ pre, code {
   border-radius: 4px;
 }
 
+p code {
+  background-color: #e8e8e8;
+}
+
 /* Start purging... */
 @tailwind components;
 /* Stop purging. */
