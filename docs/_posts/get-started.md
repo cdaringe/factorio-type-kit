@@ -40,7 +40,7 @@ The following command can be run to bootstrap a fresh mod project _automatically
 $ yarn create factorio-mod <mod-name>
 ```
 
-For demonstrating purposes, I will create a mod called `vroom`. This mod will make the character accelerate as he runs, allowing the player to travel at warp speeds!
+For demonstration purposes, I will create a mod called `vroom`. This mod will make the character accelerate as he runs, allowing the player to travel at warp speed!
 
 ```shell
 $ yarn create factorio-mod vroom
@@ -52,7 +52,7 @@ Victory! Your mod is ready to roll. Execute the following commands to get going:
 ```
 
 This step automatically installs the aforementioned dependencies and sets up the compiler toolchain.
-If you want to do these steps manually, please see the [vroom]() codebase, and replicate the artifacts hosted there.
+If you want to do these steps manually, please see the [vroom](https://github.com/cdaringe/vroom) codebase, and replicate the artifacts hosted there. [@mods.factorio.com](https://mods.factorio.com/mod/vroom)
 
 ## Understanding the barebones mod
 
