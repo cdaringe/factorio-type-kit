@@ -19,7 +19,7 @@ jobs:
       - uses: denolib/setup-deno@master
         with:
           deno-version: 1.5.4
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: 15.0.1
       - name: install
@@ -37,10 +37,6 @@ jobs:
       #     publish_dir: ./public
 
       # release
-      - name: setup-node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
