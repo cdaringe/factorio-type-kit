@@ -11,18 +11,18 @@ author:
 ---
 
 
-Programming with type safety is in. **Of course** we want type safety when programming inside of Factorio! While TypeScript doesn't offer
+**Of course** we want type safety when programming Factorio mods. Unfortunately, Factorio's Lua modding API offers no such provisions. Good news! [factorio-type-kit](https://github.com/cdaringe/factorio-type-kit) helps bridge that gap via TypeScript. While TypeScript doesn't offer
 the strongest safety guarantees of any language under the sun, it does offer moderate safety, and works well
 as a Lua replacement. The following steps are required to author factorio mods in TS:
 
 ## Factorio in TypeScript - Outline
 
-We will execute the following steps later, but at a glance, here are the general steps in TS Factorio mod development:
+We will execute the following steps later, but at a glance, here are the general required steps:
 
 1. Install [node](https://nodejs.org/). I recommend using [fnm](https://github.com/Schniz/fnm#using-a-script-macoslinux) for installing and managing nodejs installations.
 2. (optional) Install [yarn](https://classic.yarnpkg.com/en/docs/install). `npm` is the default package manager for nodejs, but the following document uses `yarn`. It takes only moments to install.
 3. Setup a `nodejs` project
-4. Install `factorio-type-kit`, [typescript](https://www.typescriptlang.org/#installation), and [TypeScriptToLua](https://github.com/TypeScriptToLua/TypeScriptToLua)
+4. Install [factorio-type-kit](https://github.com/cdaringe/factorio-type-kit), [typescript](https://www.typescriptlang.org/#installation), and [TypeScriptToLua](https://github.com/TypeScriptToLua/TypeScriptToLua)
 5. Configure the typescript compiler to use TypeScriptToLua
 6. Code
 7. Package & deploy the mod
@@ -150,9 +150,9 @@ const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
 Immediately take note that we have manually specified the type of `evt` as `OnPlayerChangedPositionPayload`. All factorio script event types follow the event naming convention: `<CamelCased-EventName>Payload`. A future version may automatically apply types to the `on_event` callback, so you not need cast.
 
 The first thing I noticed was that `evt` did not have a reference directly to the player I needed.
-It does contain the `player_id` however, and with that ID we can call the `get_player` method on the global `game` instance. `get_player` returns an instance of a `LuaPlayer`, which is a class instance with many methods and properties. We know that we _only_ want to speed up the player if he is in motion, so let's wrap our logic inside a conditional--`if (player.walking_state.walking) { ... }`.
+It does contain the `player_id` however, and with that ID we can call the `get_player` method on the global `game` instance. `get_player` returns an instance of a `LuaPlayer`, contains a `walking_state` property. Let's use _that_. We know that we _only_ want to speed up the player if he is in motion, so let's further wrap our logic inside a conditional--`if (player.walking_state.walking) { ... }`.
 
-After searching the API documentation, I concluded that there was not a direct value specifying a velocity of the character. However, I did come across `character_running_speed_modifier`, which the type definitions told me is of type `number`. Unexpectedly though, through trial and error, I learned that `character_running_speed_modifier` could be zero. Typescript did not help me here! Of course `number`s can be zero--defensive programmers everywhere are saying "you should have seen this coming", and they would be correct :). Equipped with this knowledge, let's fill in the rest.
+Next up, how do we actually speed up the player? After searching the API documentation, I concluded that there was not a direct value specifying a velocity of the character. However, I did come across `character_running_speed_modifier`, which the type definitions told me is of type `number`. Unexpectedly, through trial and error, I learned that `character_running_speed_modifier` could be zero. `Speed * 0 = 0`, so Factorio likely does a 0 check internally before calculating the player's speed. We will have to do a similar check. Notice that typescript did not me help uncover my bug! Anything of type `number` can rightfully be zero, so shame on me! Defensive programmers everywhere are saying "you should have seen this coming", and they would be correct :). Equipped with this knowledge, let's fill in the rest.
 
 ```typescript
 const onPositionChange = (evt: OnPlayerChangedPositionPayload) => {
