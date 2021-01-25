@@ -33,3 +33,7 @@ Read about JS vs Lua [this binding](https://typescripttolua.github.io/docs/the-s
 ## Can I use npm libraries?
 
 There is no recipe for this yet. Perhaps some webpack-like bundling could enable this. If you get a working recipe, send a patch!
+
+## What about parts of the mod not related to control.ts?
+
+How you use the type definitions is up to do. Currently, prototypes and associated schemas are not part of the definitions. If you want them to be, let's talk about it in GitHub issues and see what we can do.
