@@ -1,29 +1,150 @@
-<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width"/><meta charSet="utf-8"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png"/><link rel="manifest" href="/favicon/site.webmanifest"/><meta name="theme-color" content="#000"/><link rel="alternate" type="application/rss+xml" href="/feed.xml"/><meta name="description" content="factorio-type-kit - author factorio mods in typescript, or generate interfaces for your language of choice"/><title>Get started modding in TypeScript | factorio-type-kit</title><meta property="og:image" content="/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"/><meta name="next-head-count" content="11"/><link rel="preload" href="/factorio-type-kit/_next/static/css/774990d2ddf43b7a9e23.css" as="style"/><link rel="stylesheet" href="/factorio-type-kit/_next/static/css/774990d2ddf43b7a9e23.css" data-n-g=""/><link rel="preload" href="/factorio-type-kit/_next/static/css/cf72afbf3b666d1cd24c.css" as="style"/><link rel="stylesheet" href="/factorio-type-kit/_next/static/css/cf72afbf3b666d1cd24c.css" data-n-p=""/><noscript data-n-css=""></noscript><link rel="preload" href="/factorio-type-kit/_next/static/chunks/main-ae4733327bd95c4ac325.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/webpack-50bee04d1dc61f8adf5b.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/framework.9d524150d48315f49e80.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/commons.9852770279c0c14d4cef.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/pages/_app-650373ca0001f12be26b.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/2c3b9bffc7150b37a7b3810dfcf1c0b0fac2bd18.efa30a4b0daf53bd387e.js" as="script"/><link rel="preload" href="/factorio-type-kit/_next/static/chunks/pages/posts/%5Bslug%5D-f189816bdbdde2dccef6.js" as="script"/></head><body><div id="__next"><div class="min-h-screen"><div class="border-b bg-accent-1 border-accent-2"><div class="container mx-auto px-5"><div class="py-2 text-center text-sm">The source code for this project is<!-- --> <a href="https://github.com/cdaringe/factorio-type-kit" class="underline hover:text-success duration-200 transition-colors">available on GitHub</a>.</div></div></div><main><div class="container mx-auto px-5"><h2 class="text-2xl md:text-4xl font-bold tracking-tight md:tracking-tighter leading-tight mb-20 mt-8"><a class="hover:underline" href="/factorio-type-kit">Blog</a>.</h2><article class="mb-32"><h1 class="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight md:leading-none mb-12 text-center md:text-left">Get started modding in TypeScript</h1><div class="hidden md:block md:mb-12"><div class="flex items-center"><img src="/factorio-type-kit/assets/blog/authors/cdaringe.jpeg" class="w-12 h-12 rounded-full mr-4" alt="cdaringe"/><div class="text-xl font-bold">cdaringe</div></div></div><div class="mb-8 md:mb-16 sm:mx-0"><div class="sm:mx-0"><img src="/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg" alt="Cover Image for Get started modding in TypeScript" class="shadow-sm" layout="responsive" width="1240" height="620"/></div></div><div class="max-w-2xl mx-auto"><div class="block md:hidden mb-6"><div class="flex items-center"><img src="/factorio-type-kit/assets/blog/authors/cdaringe.jpeg" class="w-12 h-12 rounded-full mr-4" alt="cdaringe"/><div class="text-xl font-bold">cdaringe</div></div></div><div class="mb-6 text-lg"><time dateTime="2021-01-24T05:35:07.322Z">January	24, 2021</time></div></div><div class="max-w-2xl mx-auto"><div class="markdown-styles_markdown__1x9gM"><p>Type safety is in. In fact, it always has been! While typescript doesn't offer
-the strongest safety guarantees, it <em>does</em> offer moderate safety, and works well
+<!DOCTYPE html><html lang="en"><head><meta name="viewport" content="width=device-width"/><meta charSet="utf-8"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png"/><link rel="manifest" href="/favicon/site.webmanifest"/><meta name="theme-color" content="#000"/><link rel="alternate" type="application/rss+xml" href="/feed.xml"/><meta name="description" content="factorio-type-kit - author factorio mods in typescript, or generate interfaces for your language of choice"/><title>Get started Factorio modding in TypeScript | factorio-type-kit</title><meta name="next-head-count" content="10"/><link rel="preload" href="/factorio-type-kit/_next/static/css/c68b4029d7b5ff4ae292.css" as="style"/><link rel="stylesheet" href="/factorio-type-kit/_next/static/css/c68b4029d7b5ff4ae292.css" data-n-g=""/><link rel="preload" href="/factorio-type-kit/_next/static/css/9e98bcf55656a16efcc2.css" as="style"/><link rel="stylesheet" href="/factorio-type-kit/_next/static/css/9e98bcf55656a16efcc2.css" data-n-p=""/><noscript data-n-css=""></noscript></head><body><div id="__next"><div class="min-h-screen"><div class="border-b bg-accent-1 border-accent-2"><div class="container mx-auto px-5"><div class="py-2 text-center text-sm">The source code for this project is<!-- --> <a href="https://github.com/cdaringe/factorio-type-kit" class="underline hover:text-success duration-200 transition-colors">available on GitHub</a>.</div></div></div><main><div class="container mx-auto px-5"><h2 class="text-2xl md:text-4xl font-bold tracking-tight md:tracking-tighter leading-tight mb-20 mt-8"><a class="hover:underline" href="/factorio-type-kit">← ftk</a>.</h2><article class="mb-32"><h1 class="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight md:leading-none mb-12 text-center md:text-left">Get started Factorio modding in TypeScript</h1><div class="hidden md:block md:mb-12"><div class="flex items-center"><img src="/factorio-type-kit/assets/blog/authors/cdaringe.jpeg" class="w-12 h-12 rounded-full mr-4" alt="cdaringe"/><div class="text-xl font-bold">cdaringe</div></div></div><div class="max-w-2xl mx-auto"><div class="block md:hidden mb-6"><div class="flex items-center"><img src="/factorio-type-kit/assets/blog/authors/cdaringe.jpeg" class="w-12 h-12 rounded-full mr-4" alt="cdaringe"/><div class="text-xl font-bold">cdaringe</div></div></div><div class="mb-6 text-lg"><time dateTime="2021-01-24T05:35:07.322Z">January	24, 2021</time></div></div><div class="max-w-2xl mx-auto"><div class="markdown-styles_markdown__1x9gM"><p>Programming with type safety is <em>in™</em>. In fact, it always has been! While TypeScript doesn't offer
+the strongest safety guarantees of any language under the sun, it <em>does</em> offer moderate safety, and works well
 as a Lua replacement. The following steps are required to author factorio mods in TS:</p>
+<h2>Factorio in TypeScript - Outline</h2>
+<p>We will execute the following steps later, but at a glance, here are the general steps in TS Factorio mod development:</p>
 <ol>
-<li>Install <a href="https://nodejs.org/">node</a>. I recommend using <a href="https://github.com/Schniz/fnm#using-a-script-macoslinux">fnm</a> for installing nodejs installations.</li>
+<li>Install <a href="https://nodejs.org/">node</a>. I recommend using <a href="https://github.com/Schniz/fnm#using-a-script-macoslinux">fnm</a> for installing and managing nodejs installations.</li>
 <li>(optional) Install <a href="https://classic.yarnpkg.com/en/docs/install">yarn</a>. <code>npm</code> is the default package manager for nodejs, but the following document uses <code>yarn</code>. It takes only moments to install.</li>
-<li>Setup a <code>nodejs</code> project with typescript installed</li>
-<li>Install &#x26; configure <a href="https://github.com/TypeScriptToLua/TypeScriptToLua">TypeScriptToLua</a></li>
-<li>Install &#x26; configure <code>factorio-type-kit</code></li>
+<li>Setup a <code>nodejs</code> project</li>
+<li>Install <code>factorio-type-kit</code>, <a href="https://www.typescriptlang.org/#installation">typescript</a>, and <a href="https://github.com/TypeScriptToLua/TypeScriptToLua">TypeScriptToLua</a></li>
+<li>Configure the typescript compiler to use TypeScriptToLua</li>
 <li>Code</li>
-<li>Deploy</li>
+<li>Package &#x26; deploy the mod</li>
 </ol>
+<p>It is assumed that the reader has installed node &#x26; yarn before proceeding further.</p>
 <p>Let's get to work.</p>
-<p>Assuming the reader has installed node &#x26; yarn, to expedite a handful of intermediate steps, the following command can be run to bootstrap a fresh mod project <em>automatically</em>:</p>
-<pre><code class="language-sh">$ yarn create factorio-mod &#x3C;mod-name>
-</code></pre>
-<p>I will create a mod called <code>vroom</code>. This mod will make the character accelerate as he runs, allowing the player to travel at warp speeds!</p>
-<pre><code class="language-sh">$ yarn create factorio-mod vroom
-
+<h2>Bootstrapping a barebones mod</h2>
+<p>The following command can be run to bootstrap a fresh mod project <em>automatically</em>:</p>
+<!-- <Shell children='$ yarn create factorio-mod <mod-name>' /> -->
+<pre><code class="hljs language-shell"><span class="hljs-meta">$</span><span class="bash"> yarn create factorio-mod &#x3C;mod-name></span></code></pre>
+<p>For demonstrating purposes, I will create a mod called <code>vroom</code>. This mod will make the character accelerate as he runs, allowing the player to travel at warp speeds!</p>
+<pre><code class="hljs language-shell"><span class="hljs-meta">$</span><span class="bash"> yarn create factorio-mod vroom</span>
 ...
-
 Victory! Your mod is ready to roll. Execute the following commands to get going:
   - cd "/Users/cdaringe/src/vroom"
   - yarn start
-✨  Done in 5.75s.
+✨  Done in 5.75s.</code></pre>
+<p>This step automatically installs the aforementioned dependencies and sets up the compiler toolchain.
+If you want to do these steps manually, please see the <a href="">vroom</a> codebase, and replicate the artifacts hosted there.</p>
+<h2>Understanding the barebones mod</h2>
+<p>Let us <code>cd "path/to/vroom"</code>, and study the content. If you
+are familiar with the <a href="https://wiki.factorio.com/Tutorial:Mod_structure">factorio mod directory stucture</a>,
+this should look quite familiar.</p>
+<pre><code class="hljs language-shell">~/src/vroom via ⬢ v15.0.1
+❯ ls -alh
+Permissions Size User     Date Modified Name
+.rw-r--r--   167 cdaringe 24 Jan 11:37  control.ts
+.rw-r--r--   183 cdaringe 24 Jan 11:37  info.json
+drwxr-xr-x     - cdaringe 24 Jan 11:37  node_modules
+.rw-r--r--   247 cdaringe 24 Jan 11:37  package.json
+.rw-r--r--   131 cdaringe 24 Jan 11:37  readme.md
+.rw-r--r--   331 cdaringe 24 Jan 11:37  tsconfig.json
+.rw-r--r--   35k cdaringe 24 Jan 11:37  yarn.lock</code></pre>
+ <!-- `.trim()} /> -->
+<ul>
+<li><code>info.json</code> - the entrypont to all factorio mods, pre-populated with some essentials</li>
+<li><code>control.ts</code> - this file will compile to <code>control.lua</code>, which Factorio uses to run your mod!</li>
+<li><code>tsconfig.json</code> - typescript configuration, critically including <a href="https://typescripttolua.github.io/docs/configuration">TypescriptToLua configuration</a></li>
+<li><code>package.json</code> &#x26; <code>node_modules</code> - resources to support your TS development experience :)</li>
+</ul>
+<p>Let's open up <code>control.ts</code>:</p>
+<pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> onTick = <span class="hljs-function">(<span class="hljs-params">_evt: OnTickPayload</span>) =></span> {
+  game.print(serpent.block({
+    <span class="hljs-attr">hello</span>: <span class="hljs-string">"world"</span>,
+    <span class="hljs-attr">its_nice</span>: <span class="hljs-string">"to see you"</span>
+  }));
+};
+
+script.on_event(defines.events.on_tick, onTick);</code></pre>
+<ul>
+<li><code>script.on_event</code> - typed</li>
+<li><code>game</code> - typed</li>
+<li><code>serpent</code> - typed</li>
+<li><code>evt</code> - typed, via casting</li>
+</ul>
+<p>Boom! Types for everything!</p>
+<p>...but not quite. The Factorio Lua documentation is <em>lossy</em>, and has many cases where we simply <em>cannot</em> parse correct type definitions from their HTML. Until the factorio development team publicly supports  machine-readable API documentation, <code>factorio-type-kit</code> TypeScript provisions will generally only be 80-90%+ complete. Thus, TypeScript users will be periodically disappointed to find <code>any</code> or <code>unknown</code> types in various interfaces. With that said, <code>factorio-type-kit</code> users are welcome to manually backfill essential definitions to make our community's development kit better.</p>
+<h2>Starting the mod compiler</h2>
+<pre><code class="hljs language-shell"><span class="hljs-meta">$</span><span class="bash"> yarn start</span></code></pre>
+<p>Momentarily after launching the watching compiler, <code>control.lua</code> should be emitted. Open it up:</p>
+<pre><code class="hljs language-lua">onTick = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_evt)</span></span>
+    game.<span class="hljs-built_in">print</span>(
+        serpent.block({hello = <span class="hljs-string">"world"</span>, its_nice = <span class="hljs-string">"to see you"</span>})
+    )
+<span class="hljs-keyword">end</span>
+script.on_event(defines.events.on_tick, onTick)</code></pre>
+<p>The TypeScriptToLua compiler does a fanstastic job on producing readable Lua.</p>
+<h2>Implementing vroom</h2>
+<p>The very first thing the <code>vroom</code> mod needs to do is detect when the player is in motion.</p>
+<p>Rather that pull up the documentation, I'll just open up another call <code>script.on_event</code>,
+begin typing in <code>defines.events.</code>, let intellisense present me options, and discover <code>on_player_changed_position</code>.</p>
+<pre><code class="hljs language-typescript">script.on_event(
+  defines.events.on_player_changed_position,
+  onPositionChange
+);</code></pre>
+<p><code>onPositionChange</code> is not defined yet. Let's discuss about what it needs to do then draft it.
+First, it needs to get the player's current speed. Next, the speed needs to increase it when running. Because the purpose of the mod is to accelerate the user, we must multiply the previous speed by a scalar every so often.</p>
+<pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> onPositionChange = <span class="hljs-function">(<span class="hljs-params">evt: OnPlayerChangedPositionPayload</span>) =></span> {
+  <span class="hljs-keyword">const</span> player = game.get_player(evt.player_index);
+  <span class="hljs-keyword">if</span> (player.walking_state.walking) {
+    <span class="hljs-comment">// ...</span>
+  }
+};</code></pre>
+<p>Immediately take note that we have manually specified the type of <code>evt</code> as <code>OnPlayerChangedPositionPayload</code>. All factorio script events follow the event naming convention: <code>&#x3C;CamelCased-EventName>Payload</code>. A future version may auto apply types to the <code>on_event</code> callback, so you not need cast. Moving on.</p>
+<p>The first thing I noticed was that <code>evt</code> didn't seem to have a reference directly to the player I needed.
+Bummer. No worries, it had the ID! With the ID, I then <em>guessed</em> to inspect the global <code>game</code> class for assistance. <code>game</code> has a <code>get_player</code> method. <code>get_player</code> returns an instance of a <code>LuaPlayer</code>, which is a class instance with many methods and properties. We know that we <em>only</em> want to speed up the player if he is in motion, so let's wrap our logic inside a conditional--<code>if (player.walking_state.walking) { ... }</code>.</p>
+<p>After hunting and pecking around the API and the documentation, I concluded that there was not a direct value specifying a velocity of the character. However, I did come across <code>character_running_speed_modifier</code>, which our type definitions told me is of type <code>number</code>. Unexpectedly, through trial and error (typescript <em>did not help me here</em>), I learned that <code>character_running_speed_modifier</code> could be <em>0</em>! Of course <code>number</code>s can be zero, so defensive programmers everywhere are saying silently "you should have seen this coming", and they would be correct :). Equipped with this knowledge, let's fill in the rest.</p>
+<pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> onPositionChange = <span class="hljs-function">(<span class="hljs-params">evt: OnPlayerChangedPositionPayload</span>) =></span> {
+  <span class="hljs-keyword">const</span> player = game.get_player(evt.player_index);
+  <span class="hljs-keyword">if</span> (player.walking_state.walking) {
+    <span class="hljs-keyword">const</span> lastSpeed = player.character_running_speed_modifier;
+    <span class="hljs-keyword">const</span> baseSpeed = lastSpeed == <span class="hljs-number">0</span> ? <span class="hljs-number">1</span> : lastSpeed;
+    player.character_running_speed_modifier = baseSpeed * <span class="hljs-number">1.01</span>;
+  }
+};</code></pre>
+<p>When our player stops running, we want to have to restart the acceleration process next time he runs.
+My original approach was to listen for <code>keyup</code> events. Alas, Factorio has no key events. How else could I determine if the player has stopped running, and thus safely reset the speed modifier? Easy! On every tick of the game, I can check all players for motion--and turn of the multiplier if they are stopped!</p>
+<pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> onTick = <span class="hljs-function">(<span class="hljs-params">_evt: OnTickPayload</span>) =></span> {
+  <span class="hljs-built_in">Object</span>.entries(game.players).forEach(<span class="hljs-function">(<span class="hljs-params">[_id, player]</span>) =></span> {
+    <span class="hljs-keyword">if</span> (
+      player.character_running_speed_modifier > <span class="hljs-number">0</span> &#x26;&#x26;
+      !player.walking_state.walking
+    ) {
+      player.character_running_speed_modifier = <span class="hljs-number">0</span>;
+    }
+  });
+};</code></pre>
+<p>That is, for every player, if there is a positive speed modifier and and the player is not walking, zero out the modifier.</p>
+<p>Why didn't we just do a <code>game.players.forEach</code>? <code>game.players</code> isn't an array, so that won't work. TypeScript protected us from making that mistake! What about <code>Object.entries(game.players).forEach</code>? Yep, that worked! Why did we do <code>Object.values(...)</code>? Because <code>game.tables</code> is a special dictionary in Lua. Not all iterables map cleanly between languages. <code>Object.values(...)</code> wouldn't have given us compiler error, but still would have failed. Improved typing is needed to protect against these failures. While TypeScriptToLua generally helps out a great deal protect us from writing erroneous code, it is only as good as its applied type constraints.</p>
+<p>When using JS standard library provisions, as we did above, the compiler will add a typescript-lua polyfill, <code>lualib_bundle</code>. The emitted Lua perhaps is not as elegant:</p>
+<pre><code class="hljs language-lua"><span class="hljs-built_in">require</span>(<span class="hljs-string">"lualib_bundle"</span>);
+<span class="hljs-comment">-- ...</span>
+onTick = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(_evt)</span></span>
+    __TS__ArrayForEach(
+        __TS__ObjectEntries(game.players),
+        <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(____, ____bindingPattern0)</span></span>
+            <span class="hljs-keyword">local</span> _id = ____bindingPattern0[<span class="hljs-number">1</span>]
+            <span class="hljs-keyword">local</span> player
+            player = ____bindingPattern0[<span class="hljs-number">2</span>]
+            <span class="hljs-keyword">if</span> (player.character_running_speed_modifier > <span class="hljs-number">0</span>) <span class="hljs-keyword">and</span> (<span class="hljs-keyword">not</span> player.walking_state.walking) <span class="hljs-keyword">then</span>
+                player.character_running_speed_modifier = <span class="hljs-number">0</span>
+            <span class="hljs-keyword">end</span>
+        <span class="hljs-keyword">end</span>
+    )
+<span class="hljs-keyword">end</span></code></pre>
+<p>Even with the extra boilerplate generated, the code is still quite readable. Could be cleaner! Surely as the TypeScriptToLua compiler evolves in time, it will be.</p>
+<h2>Deploy it</h2>
+<p>I do not yet have clean, polished package &#x26; deploy scripts, but I do have functional ones.
+Do your best to cover your eyes. Running <code>yarn install_mod</code> syncs the mod into my local Factorio installation. Coupled with a watch script, every code change immediately lands in the game folder, and requires only a scenario reload to get changes applied.</p>
+<pre><code class="language-json">"scripts": {
+  "clean:install": "rm -rf ~/Library/Application\\ Support/factorio/mods/vroom*",
+  "copy:install": "VERSION=$(cat info.json | jq -r .version) &#x26;&#x26; rsync -r --exclude node_modules --exclude '.git*' --exclude build --exclude 'npm*' --exclude README.md --exclude package.json --exclude '*.lock'  ./ ~/Library/Application\\ Support/factorio/mods/vroom_$VERSION/",
+  "install_mod": "run-s clean:install copy:install",
+  "watch": "chokidar 'locale/**/*.cfg' '**/*.lua' '**/*.json' -c 'yarn install_mod'"
+}
 </code></pre>
-<p>Nice! After I <code>cd "/Users/cdaringe/src/vroom"</code>, I'll open my editor (<code>code .</code>),
-and study the layout.</p>
-</div></div></article></div></main></div><footer class="bg-accent-1 border-t border-accent-2"><div class="container mx-auto px-5"><div class="py-28 flex flex-col lg:flex-row items-center"><h3 class="text-4xl lg:text-5xl font-bold tracking-tighter leading-tight text-center lg:text-left mb-10 lg:mb-0 lg:pr-4 lg:w-1/2">Statically Generated with Next.js.</h3></div></div></footer></div><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"post":{"title":"Get started modding in TypeScript","date":"2021-01-24T05:35:07.322Z","slug":"get-started","author":{"name":"cdaringe","picture":"/factorio-type-kit/assets/blog/authors/cdaringe.jpeg"},"content":"\u003cp\u003eType safety is in. In fact, it always has been! While typescript doesn't offer\nthe strongest safety guarantees, it \u003cem\u003edoes\u003c/em\u003e offer moderate safety, and works well\nas a Lua replacement. The following steps are required to author factorio mods in TS:\u003c/p\u003e\n\u003col\u003e\n\u003cli\u003eInstall \u003ca href=\"https://nodejs.org/\"\u003enode\u003c/a\u003e. I recommend using \u003ca href=\"https://github.com/Schniz/fnm#using-a-script-macoslinux\"\u003efnm\u003c/a\u003e for installing nodejs installations.\u003c/li\u003e\n\u003cli\u003e(optional) Install \u003ca href=\"https://classic.yarnpkg.com/en/docs/install\"\u003eyarn\u003c/a\u003e. \u003ccode\u003enpm\u003c/code\u003e is the default package manager for nodejs, but the following document uses \u003ccode\u003eyarn\u003c/code\u003e. It takes only moments to install.\u003c/li\u003e\n\u003cli\u003eSetup a \u003ccode\u003enodejs\u003c/code\u003e project with typescript installed\u003c/li\u003e\n\u003cli\u003eInstall \u0026#x26; configure \u003ca href=\"https://github.com/TypeScriptToLua/TypeScriptToLua\"\u003eTypeScriptToLua\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003eInstall \u0026#x26; configure \u003ccode\u003efactorio-type-kit\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003eCode\u003c/li\u003e\n\u003cli\u003eDeploy\u003c/li\u003e\n\u003c/ol\u003e\n\u003cp\u003eLet's get to work.\u003c/p\u003e\n\u003cp\u003eAssuming the reader has installed node \u0026#x26; yarn, to expedite a handful of intermediate steps, the following command can be run to bootstrap a fresh mod project \u003cem\u003eautomatically\u003c/em\u003e:\u003c/p\u003e\n\u003cpre\u003e\u003ccode class=\"language-sh\"\u003e$ yarn create factorio-mod \u0026#x3C;mod-name\u003e\n\u003c/code\u003e\u003c/pre\u003e\n\u003cp\u003eI will create a mod called \u003ccode\u003evroom\u003c/code\u003e. This mod will make the character accelerate as he runs, allowing the player to travel at warp speeds!\u003c/p\u003e\n\u003cpre\u003e\u003ccode class=\"language-sh\"\u003e$ yarn create factorio-mod vroom\n\n...\n\nVictory! Your mod is ready to roll. Execute the following commands to get going:\n  - cd \"/Users/cdaringe/src/vroom\"\n  - yarn start\n✨  Done in 5.75s.\n\u003c/code\u003e\u003c/pre\u003e\n\u003cp\u003eNice! After I \u003ccode\u003ecd \"/Users/cdaringe/src/vroom\"\u003c/code\u003e, I'll open my editor (\u003ccode\u003ecode .\u003c/code\u003e),\nand study the layout.\u003c/p\u003e\n","ogImage":{"url":"/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"},"coverImage":"/factorio-type-kit/assets/blog/dynamic-routing/cover.jpg"}},"__N_SSG":true},"page":"/posts/[slug]","query":{"slug":"get-started"},"buildId":"iZCJdHlNECVOevvzHRibH","assetPrefix":"/factorio-type-kit","nextExport":false,"isFallback":false,"gsp":true}</script><script nomodule="" src="/factorio-type-kit/_next/static/chunks/polyfills-99d808df29361cf7ffb1.js"></script><script src="/factorio-type-kit/_next/static/chunks/main-ae4733327bd95c4ac325.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/webpack-50bee04d1dc61f8adf5b.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/framework.9d524150d48315f49e80.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/commons.9852770279c0c14d4cef.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/pages/_app-650373ca0001f12be26b.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/2c3b9bffc7150b37a7b3810dfcf1c0b0fac2bd18.efa30a4b0daf53bd387e.js" async=""></script><script src="/factorio-type-kit/_next/static/chunks/pages/posts/%5Bslug%5D-f189816bdbdde2dccef6.js" async=""></script><script src="/factorio-type-kit/_next/static/iZCJdHlNECVOevvzHRibH/_buildManifest.js" async=""></script><script src="/factorio-type-kit/_next/static/iZCJdHlNECVOevvzHRibH/_ssgManifest.js" async=""></script></body></html>
+<p>Feel free to open an issue and collab on tidying the above in <a href="https://github.com/cdaringe/create-factorio-mod/">create-factorio-mod</a>.</p>
+<h2>Enjoy it</h2>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/5cfHPHv6jS0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div></div></article></div></main></div><footer class="bg-accent-1 border-t border-accent-2"><div class="container mx-auto px-5"><div class="py-28 flex flex-col lg:flex-row items-center"><h3 class="text-4xl lg:text-5xl font-bold tracking-tighter leading-tight text-center lg:text-left mb-10 lg:mb-0 lg:pr-4 lg:w-1/2">⚙️ ☠️ 📡</h3></div></div></footer></div><link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@10.5.0/styles/monokai.min.css"/></body></html>
