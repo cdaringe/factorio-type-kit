@@ -53,5 +53,6 @@ export async function getStaticProps() {
 }
 
 export const config = {
-  unstable_runtimeJS: false
+  // :| i want the JS _just_ for the animation!
+  // unstable_runtimeJS: false
 }
