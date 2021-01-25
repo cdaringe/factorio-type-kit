@@ -11,8 +11,8 @@ author:
 ---
 
 
-Programming with type safety is _in™_. In fact, it always has been! While TypeScript doesn't offer
-the strongest safety guarantees of any language under the sun, it _does_ offer moderate safety, and works well
+Programming with type safety is in. **Of course** we want type safety when programming inside of Factorio! While TypeScript doesn't offer
+the strongest safety guarantees of any language under the sun, it does offer moderate safety, and works well
 as a Lua replacement. The following steps are required to author factorio mods in TS:
 
 ## Factorio in TypeScript - Outline
