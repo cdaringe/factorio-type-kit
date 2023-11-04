@@ -17,20 +17,11 @@ export default function Index({ allPosts }) {
           <title>factorio-type-kit</title>
         </Head>
         <Container>
-          <Intro />
-          <GearMalarkey />
-          {/* {heroPost && (
-            <HeroPost
-              title={heroPost.title}
-              coverImage={heroPost.coverImage}
-              date={heroPost.date}
-              author={heroPost.author}
-              slug={heroPost.slug}
-              excerpt={heroPost.excerpt}
-            />
-          )} */}
-          {/* {morePosts.length > 0 && <MoreStories posts={morePosts} />} */}
-          <MoreStories posts={allPosts} />
+          <h1>Please use <a 
+            target="_blank" 
+            href="https://github.com/GlassBricks/typed-factorio">https://github.com/GlassBricks/typed-factorio
+          </a> instead
+        </h1>
         </Container>
       </Layout>
     </>
