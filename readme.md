@@ -1,4 +1,10 @@
+🚨 **Please use https://github.com/GlassBricks/typed-factorio** instead.
+
+This project was released before factorio exposed structured data about all of the modeles/entities in a machine format from their website. This project was only ever 80% complete because it relied on scraping, which simply was not reliable. They guys at https://github.com/GlassBricks/typed-factorio generated typescript now in a much more sane way. It's a better system. Use that instead! Thanks for looking!
+
 # factorio-type-kit
+
+
 
 ![main](https://github.com/cdaringe/factorio-type-kit/workflows/main/badge.svg)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
