@@ -1,6 +1,6 @@
 🚨 **Please use https://github.com/GlassBricks/typed-factorio** instead.
 
-This project was released before factorio exposed structured data about all of the modeles/entities in a machine format from their website. This project was only ever 80% complete because it relied on scraping, which simply was not reliable. They guys at https://github.com/GlassBricks/typed-factorio generated typescript now in a much more sane way. It's a better system. Use that instead! Thanks for looking!
+This project was released before factorio exposed structured data about all of the modeles/entities in a machine format from their website. This project was only ever 80% complete because it relied on scraping, which simply was not reliable. They guys at https://github.com/GlassBricks/typed-factorio generate typescript now in a much more sane way. It's a better system. Use that instead! Thanks for looking!
 
 # factorio-type-kit
 
